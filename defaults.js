@@ -11,7 +11,7 @@
 window.BAEBLADE_DEFAULTS = {
   eventName: "Baeblade Academy",
   tagline: "Blader Assessment Day",
-  contentVersion: 2,
+  contentVersion: 3,
 
   roster: [
     { name: "Mig",    exp: "Expert" },
@@ -34,13 +34,14 @@ window.BAEBLADE_DEFAULTS = {
      arch = archetype the answer leans towards (see archetypes below)
      look = phrase added to their character-art description */
   questions: [
-    { text: "Your everyday style is…", options: [
-      { text: "Streetwear: sneakers, hoodies, caps", fx: { atk: 2, bal: 1 }, arch: "rebel", look: "streetwear influence with fresh sneakers" },
-      { text: "Sharp and put-together", fx: { def: 2, bal: 1 }, arch: "strategist", look: "sharp tailored lines and a neat collar" },
-      { text: "Sporty, always ready to move", fx: { sta: 2, atk: 1 }, arch: "hero", look: "athletic sportswear details" },
-      { text: "Vintage and thrifted, one of a kind", fx: { bal: 3 }, arch: "free", look: "eclectic vintage patches and pins" },
-      { text: "All black everything", fx: { def: 2, sta: 1 }, arch: "wolf", look: "dark, minimal base layers" },
-      { text: "Loud colours and prints", fx: { atk: 2, bal: 1 }, arch: "star", look: "bold graphic prints and clashing colour pops" } ] },
+    { text: "Your everyday style is…", role: "style", options: [
+      { text: "Streetwear: sneakers, hoodies, caps", fx: { atk: 2, bal: 1 }, arch: "rebel", look: "streetwear: oversized hoodie or bomber jacket, baggy cargos, chunky sneakers and a cap" },
+      { text: "Sharp and put-together", fx: { def: 2, bal: 1 }, arch: "strategist", look: "sharp smart-casual: a fitted tailored jacket, crisp collar, slim trousers and clean lines" },
+      { text: "Sporty, always ready to move", fx: { sta: 2, atk: 1 }, arch: "hero", look: "sporty athleisure: zip-up track jacket, joggers, running shoes and a sweatband" },
+      { text: "Vintage and thrifted, one of a kind", fx: { bal: 3 }, arch: "free", look: "vintage thrift: patched denim jacket over a faded band tee, covered in pins and badges" },
+      { text: "All black everything", fx: { def: 2, sta: 1 }, arch: "wolf", look: "all-black minimalist: layered black pieces, black boots, one small accent colour" },
+      { text: "Loud colours and prints", fx: { atk: 2, bal: 1 }, arch: "star", look: "loud maximalist: bold clashing prints, bright colours and statement jewellery" },
+      { text: "Preppy: collars, knits, loafers", fx: { def: 2, bal: 1 }, arch: "hero", look: "preppy: varsity jacket or cable-knit sweater over a collared shirt, chinos and loafers" } ] },
 
     { text: "Pick the walk-out music for your first battle.", options: [
       { text: "Heavy rock or metal", fx: { atk: 3 }, arch: "rebel", look: "rock-and-roll edge with studs and a torn sleeve" },

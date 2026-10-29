@@ -130,11 +130,16 @@ const Store = {
   async seed() {
     const s = this.state;
     const cv = DEF.contentVersion || 1;
-    if (s.settings && (s.settings.contentVersion || 1) < cv) {
+    const have = s.settings ? (s.settings.contentVersion || 1) : cv;
+    if (s.settings && have < 2) {
       await this.set('questions', defaultQuestions());
       await this.set('liveq', defaultLiveQ());
-      await this.set('settings', { ...s.settings, contentVersion: cv });
+    } else if (s.settings && have < 3 && s.questions) {
+      const def = defaultQuestions().find(q => q.role === 'style');
+      const qs = s.questions.map(q => (q.role === 'style' || /everyday style/i.test(q.text)) ? { ...def, id: q.id } : q);
+      await this.set('questions', qs);
     }
+    if (s.settings && have < cv) await this.set('settings', { ...this.state.settings, contentVersion: cv });
     if (!s.questions) await this.set('questions', defaultQuestions());
     if (!s.teams) await this.set('teams', []);
     if (!s.arena) await this.set('arena', defaultArena());
@@ -150,7 +155,7 @@ const Store = {
   },
 };
 
-const defaultQuestions = () => (DEF.questions || []).map(q => ({ id: uid(), text: q.text, options: q.options.map(o => ({ text: o.text, fx: { ...o.fx }, arch: o.arch || '', look: o.look || '' })) }));
+const defaultQuestions = () => (DEF.questions || []).map(q => ({ id: uid(), text: q.text, ...(q.role ? { role: q.role } : {}), options: q.options.map(o => ({ text: o.text, fx: { ...o.fx }, arch: o.arch || '', look: o.look || '' })) }));
 const defaultArena = () => ({ screen: 'lobby', revealed: 0, battle: { label: 'Battle 01', a: '', b: '', note: 'Bladers — prepare to launch' }, message: { big: 'Let it rip', small: '' } });
 const defaultCharQ = () => (DEF.charQuiz || []).map(q => ({ id: 'c' + uid(), text: q.text, options: q.options.map(o => ({ text: o.text, look: o.look || o.text })) }));
 const defaultLiveQ = () => (DEF.teamQuiz || []).map(q => ({ id: uid(), text: q.text, options: q.options.slice(), correct: q.correct || 0, seconds: q.seconds || 20, checkMe: !!q.checkMe }));
@@ -165,7 +170,7 @@ const EXP_Q = { id: 'exp', exp: true, text: 'How much Beyblade have you played?'
   { text: 'Intermediate: I know the basics and have battled a bit' },
   { text: 'Expert: I have a collection and know my combos' }] };
 const quizQs = () => [EXP_Q].concat(questions(), charQs().map(q => ({ ...q, char: true })));
-const TYPE_LOOK = { atk: 'aggressive, sharp angular armour details', def: 'sturdy, heavily shielded silhouette', sta: 'sleek, streamlined and agile build', bal: 'versatile, well-balanced design' };
+const TYPE_LOOK = { atk: 'aggressive, sharp angular accents', def: 'sturdy, heavily shielded silhouette', sta: 'sleek, streamlined and agile build', bal: 'versatile, well-balanced design' };
 const ARCH = DEF.archetypes || {};
 function archOf(answers) {
   const tally = {};
@@ -175,7 +180,11 @@ function archOf(answers) {
 }
 function styleLooks(b) {
   const a = b.answers || {};
-  return questions().map(q => (q.options[a[q.id]] || {}).look).filter(Boolean);
+  return questions().filter(q => q.role !== 'style').map(q => (q.options[a[q.id]] || {}).look).filter(Boolean);
+}
+function fashionOf(b) {
+  const q = questions().find(x => x.role === 'style');
+  return q ? (q.options[(b.answers || {})[q.id]] || {}).look || '' : '';
 }
 function lookOf(b) {
   const a = b.answers || {};
@@ -187,6 +196,7 @@ function briefOf(b) {
   const bits = [
     'Turn the person in the reference photo into an original anime-style spinning-top battle character, in the style of a modern Japanese battling-tops anime (inspired by Beyblade, but not a copy of any existing character).',
     'Keep their face, skin tone, hairstyle and hair colour clearly recognisable.',
+    fashionOf(b) ? `OUTFIT: their clothing must clearly show their personal style, ${fashionOf(b)}, upgraded into battle-ready gear. This style should be the first thing you notice about the outfit; any gear or armour details below are added on top of it, never replacing it.` : '',
     b.type ? `They are ${b.type === 'atk' ? 'an' : 'a'} ${typeName(b.type)}-type Blader: ${TYPE_LOOK[b.type]}.` : '',
     ar ? `Archetype: ${ar.name} — ${ar.look}.` : '',
     looks.length ? 'Character details: ' + looks.join('; ') + '.' : '',
@@ -465,7 +475,7 @@ function adminQuestions() {
   return `<div class="section-head"><div><p class="eyebrow">${qs.length} questions · each answer sets stats, an archetype and art details</p><h2>Profile quiz</h2></div>
     <div class="row"><button class="btn primary small" data-act="q-new">Add question</button><button class="btn danger small" data-act="q-restore" data-confirm="Replace all questions?">Restore defaults</button></div></div>
   <div class="note warn" style="margin-bottom:14px"><p>Bladers who already finished keep their stats. To re-score someone after editing questions, open them in Bladers and reset their assessment.</p></div>
-  <div class="qlist">${qs.map((q, i) => `<div class="qitem"><span class="n">${pad(i + 1)}</span><div style="min-width:0"><p>${esc(q.text)}</p><div class="qopts">${q.options.map(o => `<span>${esc(o.text)} <b class="num">${STATS.filter(s => +o.fx?.[s.k]).map(s => `${s.short}+${o.fx[s.k]}`).join(' ')}</b></span>`).join('')}</div></div>
+  <div class="qlist">${qs.map((q, i) => `<div class="qitem"><span class="n">${pad(i + 1)}</span><div style="min-width:0"><p>${esc(q.text)}${q.role === 'style' ? ' <span class="chip">Sets the outfit style</span>' : ''}</p><div class="qopts">${q.options.map(o => `<span>${esc(o.text)} <b class="num">${STATS.filter(s => +o.fx?.[s.k]).map(s => `${s.short}+${o.fx[s.k]}`).join(' ')}</b></span>`).join('')}</div></div>
     <div class="qactions"><button class="btn ghost small" data-act="q-move" data-i="${i}" data-d="-1" ${i === 0 ? 'disabled' : ''} aria-label="Move up">↑</button><button class="btn ghost small" data-act="q-move" data-i="${i}" data-d="1" ${i === qs.length - 1 ? 'disabled' : ''} aria-label="Move down">↓</button><button class="btn small" data-act="q-edit" data-i="${i}">Edit</button><button class="btn danger small" data-act="q-del" data-i="${i}" data-confirm="Delete?">Delete</button></div></div>`).join('') || '<p class="muted">No questions yet.</p>'}</div>
   ${adminCharQs()}`;
 }
