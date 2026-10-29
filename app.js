@@ -160,7 +160,11 @@ const S = () => Store.state.settings || {};
 const bladers = () => Object.values(Store.state.bladers).sort((a, b) => a.id.localeCompare(b.id));
 const questions = () => Store.state.questions || [];
 const charQs = () => Store.state.charq || [];
-const quizQs = () => questions().concat(charQs().map(q => ({ ...q, char: true })));
+const EXP_Q = { id: 'exp', exp: true, text: 'How much Beyblade have you played?', options: [
+  { text: 'Beginner: new to it, or it has been years' },
+  { text: 'Intermediate: I know the basics and have battled a bit' },
+  { text: 'Expert: I have a collection and know my combos' }] };
+const quizQs = () => [EXP_Q].concat(questions(), charQs().map(q => ({ ...q, char: true })));
 const TYPE_LOOK = { atk: 'aggressive, sharp angular armour details', def: 'sturdy, heavily shielded silhouette', sta: 'sleek, streamlined and agile build', bal: 'versatile, well-balanced design' };
 const ARCH = DEF.archetypes || {};
 function archOf(answers) {
@@ -367,7 +371,7 @@ function viewQuiz(b) {
   const q = qs[ui.qIndex];
   const picked = ui.draft[q.id];
   return `<div class="progress"><span style="width:${(ui.qIndex) / qs.length * 100}%"></span></div>
-    <p class="q-count">Question ${pad(ui.qIndex + 1)} / ${pad(qs.length)}${q.char ? ' · Your character' : ''}</p>
+    <p class="q-count">Question ${pad(ui.qIndex + 1)} / ${pad(qs.length)}${q.char ? ' · Your character' : q.exp ? ' · Experience' : ''}</p>
     <h1 class="q-text">${esc(q.text)}</h1>
     <div class="options">${q.options.map((o, i) => `<button class="opt ${picked === i ? 'picked' : ''}" data-act="answer" data-i="${i}"><b>${String.fromCharCode(65 + i)}</b><span>${esc(o.text)}</span></button>`).join('')}</div>
     <div class="row spread" style="margin-top:22px"><button class="btn ghost small" data-act="q-back" ${ui.qIndex === 0 ? 'disabled' : ''}>Previous</button><button class="btn ghost small" data-act="logout">Log out</button></div>`;
@@ -381,7 +385,8 @@ async function answer(i) {
   if (ui.qIndex < qs.length - 1) { ui.qIndex++; render(); window.scrollTo(0, 0); return; }
   const { stats, type } = computeStats(ui.draft);
   ui.justFinished = true;
-  await Store.set('blader:' + b.id, { ...b, answers: { ...ui.draft }, stats, type, arch: archOf(ui.draft), done: true, doneAt: new Date().toISOString() });
+  const exp = EXP[ui.draft.exp] || b.exp;
+  await Store.set('blader:' + b.id, { ...b, exp, answers: { ...ui.draft }, stats, type, arch: archOf(ui.draft), done: true, doneAt: new Date().toISOString() });
   local.set('draft:' + b.id, null);
   window.scrollTo(0, 0);
 }
