@@ -395,7 +395,7 @@ function viewProfile(b) {
     <div style="min-width:0">
       <span class="bcard-id">${esc(b.id)} · ${esc(b.exp)}</span>
       <h1>${esc(b.name)}</h1>
-      <span class="type-badge">${esc(typeName(b.type))} type</span>${ARCH[b.arch] ? `<p class="arch"><b>${esc(ARCH[b.arch].name)}</b> · ${esc(ARCH[b.arch].blurb)}</p>` : ''}
+      <span class="type-badge">${esc(typeName(b.type))} type</span>${(() => { const ar = ARCH[b.arch || archOf(b.answers)]; return ar ? `<p class="arch"><b>${esc(ar.name)}</b> · ${esc(ar.blurb)}</p>` : ''; })()}
       ${statBars(b)}
     </div>
   </article>
