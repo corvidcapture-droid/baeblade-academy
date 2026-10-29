@@ -60,7 +60,7 @@ function download(filename, text, type = 'text/plain') {
 /* ---------- data store: local browser storage, or Supabase when configured ---------- */
 const Store = {
   mode: 'local', error: '',
-  state: { settings: null, questions: null, teams: null, arena: null, liveq: null, live: null, bladers: {}, answers: {}, joins: {} },
+  state: { settings: null, questions: null, charq: null, teams: null, arena: null, liveq: null, live: null, bladers: {}, answers: {}, joins: {} },
 
   apply(key, value) {
     const pre = key.split(':')[0];
@@ -133,6 +133,7 @@ const Store = {
     if (!s.teams) await this.set('teams', []);
     if (!s.arena) await this.set('arena', defaultArena());
     if (!s.liveq) await this.set('liveq', defaultLiveQ());
+    if (!s.charq) await this.set('charq', defaultCharQ());
     if (!s.live) await this.set('live', { status: 'idle', qIndex: 0, stamp: '' });
     if (!s.settings) {
       await this.set('settings', { eventName: DEF.eventName || 'Baeblade Academy', tagline: DEF.tagline || 'Blader Assessment Day', adminPin: '1234', teamSize: 3, showTeams: false, siteUrl: '', requirePin: true, selfJoin: true });
@@ -145,12 +146,32 @@ const Store = {
 
 const defaultQuestions = () => (DEF.questions || []).map(q => ({ id: uid(), text: q.text, options: q.options.map(o => ({ text: o.text, fx: { ...o.fx } })) }));
 const defaultArena = () => ({ screen: 'lobby', revealed: 0, battle: { label: 'Battle 01', a: '', b: '', note: 'Bladers — prepare to launch' }, message: { big: 'Let it rip', small: '' } });
+const defaultCharQ = () => (DEF.charQuiz || []).map(q => ({ id: 'c' + uid(), text: q.text, options: q.options.map(o => ({ text: o.text, look: o.look || o.text })) }));
 const defaultLiveQ = () => (DEF.teamQuiz || []).map(q => ({ id: uid(), text: q.text, options: q.options.slice(), correct: q.correct || 0, seconds: q.seconds || 20, checkMe: !!q.checkMe }));
 
 /* ---------- domain helpers ---------- */
 const S = () => Store.state.settings || {};
 const bladers = () => Object.values(Store.state.bladers).sort((a, b) => a.id.localeCompare(b.id));
 const questions = () => Store.state.questions || [];
+const charQs = () => Store.state.charq || [];
+const quizQs = () => questions().concat(charQs().map(q => ({ ...q, char: true })));
+const TYPE_LOOK = { atk: 'aggressive, sharp angular armour details', def: 'sturdy, heavily shielded silhouette', sta: 'sleek, streamlined and agile build', bal: 'versatile, well-balanced design' };
+function lookOf(b) {
+  const a = b.answers || {};
+  return charQs().map(q => { const o = q.options[a[q.id]]; return o ? { q: q.text, pick: o.text, look: o.look } : null; }).filter(Boolean);
+}
+function briefOf(b) {
+  const looks = lookOf(b).map(x => x.look);
+  const bits = [
+    'Turn the person in the reference photo into an original anime-style spinning-top battle character, in the style of a modern Japanese battling-tops anime (inspired by Beyblade, but not a copy of any existing character).',
+    'Keep their face, skin tone, hairstyle and hair colour clearly recognisable.',
+    b.type ? `They are a ${typeName(b.type)}-type Blader: ${TYPE_LOOK[b.type]}.` : '',
+    looks.length ? 'Character details: ' + looks.join('; ') + '.' : '',
+    'Holding their own glowing spinning top. Bold clean line art, cel shading, dramatic rim lighting, dynamic stadium arena background.',
+    'Square 1:1 head-and-torso portrait, face centred. No text, no logos.'
+  ];
+  return bits.filter(Boolean).join(' ');
+}
 const teams = () => Store.state.teams || [];
 const teamOf = id => teams().find(t => t.members.includes(id));
 
@@ -321,20 +342,20 @@ function pinKey(k) {
 }
 
 function viewQuiz(b) {
-  const qs = questions();
+  const qs = quizQs();
   if (!qs.length) return `<div class="screen-head"><p class="eyebrow">${esc(b.id)}</p><h1>Hang tight, ${esc(b.name)}</h1><p class="muted">The host hasn't added any assessment questions yet.</p></div><button class="btn ghost" data-act="logout">Log out</button>`;
   ui.qIndex = Math.min(ui.qIndex, qs.length - 1);
   const q = qs[ui.qIndex];
   const picked = ui.draft[q.id];
   return `<div class="progress"><span style="width:${(ui.qIndex) / qs.length * 100}%"></span></div>
-    <p class="q-count">Question ${pad(ui.qIndex + 1)} / ${pad(qs.length)}</p>
+    <p class="q-count">Question ${pad(ui.qIndex + 1)} / ${pad(qs.length)}${q.char ? ' · Your character' : ''}</p>
     <h1 class="q-text">${esc(q.text)}</h1>
     <div class="options">${q.options.map((o, i) => `<button class="opt ${picked === i ? 'picked' : ''}" data-act="answer" data-i="${i}"><b>${String.fromCharCode(65 + i)}</b><span>${esc(o.text)}</span></button>`).join('')}</div>
     <div class="row spread" style="margin-top:22px"><button class="btn ghost small" data-act="q-back" ${ui.qIndex === 0 ? 'disabled' : ''}>Previous</button><button class="btn ghost small" data-act="logout">Log out</button></div>`;
 }
 
 async function answer(i) {
-  const b = me(); const qs = questions(); const q = qs[ui.qIndex];
+  const b = me(); const qs = quizQs(); const q = qs[ui.qIndex];
   if (!b || !q) return;
   ui.draft[q.id] = i;
   local.set('draft:' + b.id, JSON.stringify(ui.draft));
@@ -347,7 +368,7 @@ async function answer(i) {
 }
 
 function viewProfile(b) {
-  const t = teamOf(b.id);
+  const t = teamOf(b.id), picks = lookOf(b);
   const anim = ui.justFinished ? 'reveal' : ''; ui.justFinished = false;
   return `<div class="screen-head"><p class="eyebrow">Assessment complete</p></div>
   <article class="plate bcard ${anim} t-${esc(b.type)}">
@@ -359,6 +380,7 @@ function viewProfile(b) {
       ${statBars(b)}
     </div>
   </article>
+  ${picks.length ? `<div class="plate" style="margin-top:14px"><p class="eyebrow">Your character</p><div class="pick-list">${picks.map(x => `<div><span class="lbl">${esc(x.q)}</span><b>${esc(x.pick)}</b></div>`).join('')}</div>${b.img ? '' : '<p class="muted" style="margin:12px 0 0">Your character art is being forged. It will appear here before the party.</p>'}</div>` : ''}
   ${S().showTeams && t ? `<div class="plate" style="margin-top:14px"><p class="eyebrow">Your team</p><h2 style="font-size:40px;margin:6px 0 12px">${esc(t.name)}</h2><div class="row">${t.members.filter(id => id !== b.id).map(id => Store.state.bladers[id]).filter(Boolean).map(m => `<div class="who">${avatar(m)}<b>${esc(m.name)}</b></div>`).join('')}</div></div>` : `<p class="muted" style="margin-top:18px">Teams are revealed on the arena screen. Keep this page open.</p>`}
   <div class="row" style="margin-top:18px"><button class="btn ghost small" data-act="logout">Log out</button><span class="muted" style="font-size:14px">Your PIN is <b class="num">${esc(b.pin)}</b> if you need to log in on another phone.</span></div>`;
 }
@@ -410,7 +432,7 @@ function adminBladers() {
     <td>${b.done ? '<span class="chip ok">Done</span>' : '<span class="chip">Waiting</span>'}</td>
     <td>${b.type ? `<span class="chip t t-${b.type}">${typeName(b.type)}</span>` : '—'}</td>
     <td>${t ? esc(t.name) : '—'}</td>
-    <td><div class="row" style="flex-wrap:nowrap;gap:6px"><button class="btn small ghost" data-act="invite-copy" data-id="${esc(b.id)}">Copy invite</button><button class="btn small ghost" data-act="blader-edit" data-id="${esc(b.id)}">Edit</button></div></td></tr>`; }).join('') || '<tr><td colspan="8" class="muted">No Bladers yet. Add one or import a CSV.</td></tr>'}
+    <td><div class="row" style="flex-wrap:nowrap;gap:6px"><button class="btn small ghost" data-act="invite-copy" data-id="${esc(b.id)}">Copy invite</button>${b.done ? `<button class="btn small ghost" data-act="brief-copy" data-id="${esc(b.id)}">Copy art description</button>` : ''}<button class="btn small ghost" data-act="blader-edit" data-id="${esc(b.id)}">Edit</button></div></td></tr>`; }).join('') || '<tr><td colspan="8" class="muted">No Bladers yet. Add one or import a CSV.</td></tr>'}
   </tbody></table></div>`;
 }
 
@@ -420,7 +442,34 @@ function adminQuestions() {
     <div class="row"><button class="btn primary small" data-act="q-new">Add question</button><button class="btn danger small" data-act="q-restore" data-confirm="Replace all questions?">Restore defaults</button></div></div>
   <div class="note warn" style="margin-bottom:14px"><p>Bladers who already finished keep their stats. To re-score someone after editing questions, open them in Bladers and reset their assessment.</p></div>
   <div class="qlist">${qs.map((q, i) => `<div class="qitem"><span class="n">${pad(i + 1)}</span><div style="min-width:0"><p>${esc(q.text)}</p><div class="qopts">${q.options.map(o => `<span>${esc(o.text)} <b class="num">${STATS.filter(s => +o.fx?.[s.k]).map(s => `${s.short}+${o.fx[s.k]}`).join(' ')}</b></span>`).join('')}</div></div>
-    <div class="qactions"><button class="btn ghost small" data-act="q-move" data-i="${i}" data-d="-1" ${i === 0 ? 'disabled' : ''} aria-label="Move up">↑</button><button class="btn ghost small" data-act="q-move" data-i="${i}" data-d="1" ${i === qs.length - 1 ? 'disabled' : ''} aria-label="Move down">↓</button><button class="btn small" data-act="q-edit" data-i="${i}">Edit</button><button class="btn danger small" data-act="q-del" data-i="${i}" data-confirm="Delete?">Delete</button></div></div>`).join('') || '<p class="muted">No questions yet.</p>'}</div>`;
+    <div class="qactions"><button class="btn ghost small" data-act="q-move" data-i="${i}" data-d="-1" ${i === 0 ? 'disabled' : ''} aria-label="Move up">↑</button><button class="btn ghost small" data-act="q-move" data-i="${i}" data-d="1" ${i === qs.length - 1 ? 'disabled' : ''} aria-label="Move down">↓</button><button class="btn small" data-act="q-edit" data-i="${i}">Edit</button><button class="btn danger small" data-act="q-del" data-i="${i}" data-confirm="Delete?">Delete</button></div></div>`).join('') || '<p class="muted">No questions yet.</p>'}</div>
+  ${adminCharQs()}`;
+}
+
+function adminCharQs() {
+  const cs = charQs();
+  return `<div class="section-head" style="margin-top:40px"><div><p class="eyebrow">${cs.length} questions · asked after the assessment · shape each Blader's character art</p><h2>Character</h2></div>
+    <div class="row"><button class="btn primary small" data-act="cq-new">Add question</button><button class="btn danger small" data-act="cq-restore" data-confirm="Replace all character questions?">Restore defaults</button></div></div>
+  <div class="note" style="margin-bottom:14px"><p>Each answer adds a phrase to that Blader's character description. Copy it from Admin → Bladers and paste it into Artlist with their photo.</p></div>
+  <div class="qlist">${cs.map((q, i) => `<div class="qitem"><span class="n">C${i + 1}</span><div style="min-width:0"><p>${esc(q.text)}</p><div class="qopts">${q.options.map(o => `<span title="${esc(o.look)}">${esc(o.text)}</span>`).join('')}</div></div>
+    <div class="qactions"><button class="btn ghost small" data-act="cq-move" data-i="${i}" data-d="-1" ${i === 0 ? 'disabled' : ''} aria-label="Move up">↑</button><button class="btn ghost small" data-act="cq-move" data-i="${i}" data-d="1" ${i === cs.length - 1 ? 'disabled' : ''} aria-label="Move down">↓</button><button class="btn small" data-act="cq-edit" data-i="${i}">Edit</button><button class="btn danger small" data-act="cq-del" data-i="${i}" data-confirm="Delete?">Delete</button></div></div>`).join('') || '<p class="muted">No character questions.</p>'}</div>`;
+}
+
+function modalCharQ(m) {
+  const d = m.draft;
+  return `<h2>${m.index == null ? 'New character question' : 'Character question C' + (m.index + 1)}</h2>
+  <div class="field"><label for="f-cqtext">Question</label><textarea id="f-cqtext" rows="2">${esc(d.text)}</textarea></div>
+  <p class="muted" style="margin:0;font-size:14px">The answer is what guests tap. The description phrase is what goes into the art prompt.</p>
+  ${d.options.map((o, i) => `<div class="optrow"><div class="row spread"><span class="lbl">Answer ${String.fromCharCode(65 + i)}</span>${d.options.length > 2 ? `<button class="btn danger small" data-act="cqopt-del" data-i="${i}">Remove</button>` : ''}</div>
+    <input id="cq-t-${i}" type="text" value="${esc(o.text)}" aria-label="Answer ${i + 1}" placeholder="What guests see">
+    <input id="cq-l-${i}" type="text" value="${esc(o.look)}" aria-label="Description phrase ${i + 1}" placeholder="Phrase added to the art description"></div>`).join('')}
+  ${d.options.length < 8 ? '<button class="btn ghost small" data-act="cqopt-add">Add answer</button>' : ''}
+  <div class="modal-foot"><span></span><div class="row"><button class="btn ghost" data-act="modal-close">Cancel</button><button class="btn primary" data-act="cq-save">Save question</button></div></div>`;
+}
+function readCQForm() {
+  const d = ui.modal.draft;
+  d.text = $('#f-cqtext').value;
+  d.options = d.options.map((_, i) => ({ text: $('#cq-t-' + i).value, look: $('#cq-l-' + i).value }));
 }
 
 function adminTeams() {
@@ -509,7 +558,7 @@ function openModal(m) { ui.modal = m; drawModal(); }
 function closeModal(silent) { ui.modal = null; $('#modal-root').innerHTML = ''; if (!silent) render(); }
 function drawModal() {
   const m = ui.modal; if (!m) { $('#modal-root').innerHTML = ''; return; }
-  const inner = m.type === 'blader' ? modalBlader(m) : m.type === 'import' ? modalImport() : m.type === 'copy' ? modalCopy(m) : m.type === 'lq' ? modalLiveQ(m) : modalQuestion(m);
+  const inner = m.type === 'blader' ? modalBlader(m) : m.type === 'import' ? modalImport() : m.type === 'copy' ? modalCopy(m) : m.type === 'lq' ? modalLiveQ(m) : m.type === 'cq' ? modalCharQ(m) : modalQuestion(m);
   $('#modal-root').innerHTML = `<div class="modal-bg" data-act="modal-bg"><div class="modal" role="dialog" aria-modal="true">${inner}</div></div>`;
   const f = $('#modal-root input[type="text"], #modal-root textarea'); if (f && !m.focused) { f.focus(); m.focused = true; }
 }
@@ -526,6 +575,7 @@ function modalBlader(m) {
     <div class="field"><label>Blader ID</label><input type="text" value="${esc(b ? b.id : nextId())}" disabled></div></div>
   ${b ? `<div class="field"><span class="lbl">Stats ${b.done ? '' : '(fill in to override, or let the assessment set them)'}</span><div class="grid4">${STATS.map(s => `<div class="field t-${s.k}"><label for="f-${s.k}" style="color:var(--tc)">${s.short}</label><input id="f-${s.k}" type="number" min="0" max="99" value="${d.stats ? d.stats[s.k] : ''}"></div>`).join('')}</div></div>
   <div class="field"><label for="f-type">Type</label><select id="f-type"><option value="">Auto (highest stat)</option>${STATS.map(s => `<option value="${s.k}" ${d.type === s.k ? 'selected' : ''}>${s.name}</option>`).join('')}</select></div>` : ''}
+  ${b && b.done ? `<div class="field"><span class="lbl">Character art description · paste into Artlist with their photo</span><textarea id="f-brief" rows="6" readonly>${esc(briefOf(b))}</textarea><div class="row"><button class="btn small" data-act="brief-copy" data-id="${esc(b.id)}">Copy description</button></div></div>` : ''}
   <div class="modal-foot"><div class="row">${b ? `<button class="btn danger small" data-act="blader-reset" data-confirm="Reset assessment?">Reset assessment</button><button class="btn danger small" data-act="blader-del" data-confirm="Delete ${esc(b.name)}?">Delete</button>` : ''}</div>
     <div class="row"><button class="btn ghost" data-act="modal-close">Cancel</button><button class="btn primary" data-act="blader-save">Save</button></div></div>`;
 }
@@ -638,7 +688,7 @@ async function restoreBackup(file) {
   try {
     const data = JSON.parse(await file.text());
     if (!data || !Array.isArray(data.bladers)) throw new Error('This is not a Baeblade backup file.');
-    for (const k of ['settings', 'questions', 'liveq', 'teams', 'arena']) if (data[k]) await Store.set(k, data[k]);
+    for (const k of ['settings', 'questions', 'charq', 'liveq', 'teams', 'arena']) if (data[k]) await Store.set(k, data[k]);
     const keep = new Set(data.bladers.map(b => b.id));
     for (const b of bladers()) if (!keep.has(b.id)) await Store.del('blader:' + b.id);
     for (const b of data.bladers) await Store.set('blader:' + b.id, b);
@@ -895,6 +945,23 @@ const actions = {
   },
   'q-move': async el => { const i = +el.dataset.i, j = i + +el.dataset.d, qs = questions().slice(); [qs[i], qs[j]] = [qs[j], qs[i]]; await Store.set('questions', qs); },
   'q-del': async el => { const qs = questions().slice(); qs.splice(+el.dataset.i, 1); await Store.set('questions', qs); toast('Question deleted'); },
+  'cq-new': () => openModal({ type: 'cq', index: null, draft: { text: '', options: [{ text: '', look: '' }, { text: '', look: '' }, { text: '', look: '' }] } }),
+  'cq-edit': el => { const i = +el.dataset.i; openModal({ type: 'cq', index: i, draft: JSON.parse(JSON.stringify(charQs()[i])) }); },
+  'cqopt-add': () => { readCQForm(); ui.modal.draft.options.push({ text: '', look: '' }); drawModal(); },
+  'cqopt-del': el => { readCQForm(); ui.modal.draft.options.splice(+el.dataset.i, 1); drawModal(); },
+  'cq-save': async () => {
+    readCQForm(); const d = ui.modal.draft;
+    if (!d.text.trim()) { toast('Write the question first.', 'bad'); return; }
+    if (d.options.some(o => !o.text.trim())) { toast('Every answer needs text.', 'bad'); return; }
+    d.options = d.options.map(o => ({ text: o.text.trim(), look: o.look.trim() || o.text.trim() }));
+    const cs = charQs().slice(), item = { id: d.id || 'c' + uid(), text: d.text.trim(), options: d.options };
+    if (ui.modal.index == null) cs.push(item); else cs[ui.modal.index] = item;
+    await Store.set('charq', cs); closeModal(); toast('Character question saved');
+  },
+  'cq-move': async el => { const i = +el.dataset.i, j = i + +el.dataset.d, cs = charQs().slice(); [cs[i], cs[j]] = [cs[j], cs[i]]; await Store.set('charq', cs); },
+  'cq-del': async el => { const cs = charQs().slice(); cs.splice(+el.dataset.i, 1); await Store.set('charq', cs); toast('Question deleted'); },
+  'cq-restore': async () => { await Store.set('charq', defaultCharQ()); toast('Default character questions restored'); },
+  'brief-copy': el => { const b = Store.state.bladers[el.dataset.id]; copyText(briefOf(b), `${b.name}'s character description copied`); },
   'q-restore': async () => { await Store.set('questions', defaultQuestions()); toast('Default questions restored'); },
 
   'teams-gen': generateTeams,
@@ -938,7 +1005,7 @@ const actions = {
   'message-show': () => { Store.set('arena', { ...arena(), screen: 'message', message: { big: $('#f-mbig').value, small: $('#f-msmall').value } }); toast('Message is on the TV'); },
   'fullscreen': () => { try { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen().catch(() => {}); } catch {} },
 
-  'backup': () => download('Baeblade_Backup_' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify({ app: 'baeblade-academy', savedAt: new Date().toISOString(), settings: S(), questions: questions(), liveq: liveQs(), teams: teams(), arena: arena(), bladers: bladers() }, null, 2), 'application/json'),
+  'backup': () => download('Baeblade_Backup_' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify({ app: 'baeblade-academy', savedAt: new Date().toISOString(), settings: S(), questions: questions(), charq: charQs(), liveq: liveQs(), teams: teams(), arena: arena(), bladers: bladers() }, null, 2), 'application/json'),
   'wipe': async () => { for (const b of bladers()) await Store.del('blader:' + b.id); for (const k of Object.keys(Store.state.answers)) await Store.del('ans:' + k); for (const k of Object.keys(Store.state.joins)) await Store.del('join:' + k); await Store.set('teams', []); await Store.set('arena', defaultArena()); toast('Roster and teams cleared'); },
 
   'modal-close': () => closeModal(),

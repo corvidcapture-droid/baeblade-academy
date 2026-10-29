@@ -102,6 +102,54 @@ window.BAEBLADE_DEFAULTS = {
       { text: "Half chocolate, half vanilla.", fx: { bal: 3 } } ] }
   ],
 
+  /* CHARACTER QUESTIONS — asked after the profile quiz.
+     "look" is the phrase each answer adds to that Blader's character description
+     (the text you paste into Artlist with their photo). Edit in Admin → Profile quiz. */
+  charQuiz: [
+    { text: "Pick your Blader colours.", options: [
+      { text: "Crimson red and black", look: "crimson red and black colour scheme" },
+      { text: "Electric blue and silver", look: "electric blue and silver colour scheme" },
+      { text: "Toxic green and charcoal", look: "toxic green and charcoal colour scheme" },
+      { text: "Royal purple and gold", look: "royal purple and gold colour scheme" },
+      { text: "Solar orange and white", look: "solar orange and white colour scheme" },
+      { text: "Ice white and teal", look: "ice white and teal colour scheme" } ] },
+    { text: "What do you battle in?", options: [
+      { text: "Armoured street jacket", look: "armoured streetwear jacket with tech panels" },
+      { text: "Ninja gear", look: "sleek ninja-inspired battle gear with a face wrap around the neck" },
+      { text: "Racing suit", look: "fitted motor-racing suit with sponsor-style patches" },
+      { text: "Futuristic tech armour", look: "futuristic light tech armour with glowing seams" },
+      { text: "Samurai-inspired", look: "modern samurai-inspired outfit with shoulder guards" },
+      { text: "Hoodie and cargo pants", look: "oversized hoodie and cargo pants, casual but battle-ready" } ] },
+    { text: "Your signature accessory?", options: [
+      { text: "Fingerless gloves", look: "fingerless battle gloves" },
+      { text: "Visor goggles", look: "tinted visor goggles pushed up on the forehead" },
+      { text: "Long scarf", look: "a long scarf trailing in the wind" },
+      { text: "Headphones", look: "chunky headphones around the neck" },
+      { text: "Cape", look: "a short dramatic cape" },
+      { text: "Arm bracers", look: "metal arm bracers" } ] },
+    { text: "When you launch, the arena fills with…", options: [
+      { text: "Lightning", look: "crackling lightning aura" },
+      { text: "Fire", look: "blazing fire aura" },
+      { text: "A tornado", look: "swirling wind tornado aura" },
+      { text: "Shadow smoke", look: "dark shadow smoke aura" },
+      { text: "Crystal shards", look: "floating crystal shard aura" },
+      { text: "Ocean waves", look: "crashing water wave aura" } ] },
+    { text: "Your spirit beast?", options: [
+      { text: "Dragon", look: "a translucent dragon spirit rising behind them" },
+      { text: "Phoenix", look: "a translucent phoenix spirit rising behind them" },
+      { text: "Wolf", look: "a translucent wolf spirit rising behind them" },
+      { text: "Pegasus", look: "a translucent pegasus spirit rising behind them" },
+      { text: "Tiger", look: "a translucent tiger spirit rising behind them" },
+      { text: "Shark", look: "a translucent shark spirit rising behind them" },
+      { text: "Raven", look: "a translucent raven spirit rising behind them" } ] },
+    { text: "Strike a pose.", options: [
+      { text: "Mid-launch, ripcord flying", look: "pose: mid-launch, pulling the launcher ripcord" },
+      { text: "Holding my Bey up to the camera", look: "pose: holding their spinning top up towards the viewer" },
+      { text: "Arms crossed, unbothered", look: "pose: arms crossed, confident smirk" },
+      { text: "Crouched and ready", look: "pose: low crouch, launcher aimed, intense focus" },
+      { text: "Pointing at my rival", look: "pose: pointing straight at the viewer as a challenge" } ] }
+  ],
+
   /* LIVE TEAM QUIZ — played at the party on the TV.
      "correct" is the number of the right answer: 0 = first, 1 = second, 2 = third, 3 = fourth.
      The Alden questions are guesses: set the right answers in Admin → Team quiz. */

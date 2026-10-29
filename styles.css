@@ -395,3 +395,7 @@ body[data-view="arena"] { overflow: hidden; }
   .corner-qr { display: none; }
 }
 .form > .pill { justify-self: start; }
+
+.pick-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 10px; }
+.pick-list div { display: grid; gap: 4px; min-width: 0; }
+.pick-list b { font-weight: 600; }
