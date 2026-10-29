@@ -226,7 +226,7 @@ function changed() { if (busy()) pending = true; else render(); }
 document.addEventListener('focusout', () => setTimeout(() => { if (pending && !busy()) render(); }, 0));
 
 const route = () => (location.hash.replace('#', '') || 'home').split(/[/?]/)[0];
-window.addEventListener('hashchange', () => { closeModal(true); render(); window.scrollTo(0, 0); });
+window.addEventListener('hashchange', () => { if (route() === 'home') { ui.pinFor = null; ui.pin = ''; ui.pickQuery = ''; } closeModal(true); render(); window.scrollTo(0, 0); });
 
 function render() {
   pending = false;
@@ -242,7 +242,7 @@ function render() {
 function topbar(current) {
   const pill = Store.mode === 'live' ? '<span class="pill live"><i></i>Live</span>' : Store.error ? '<span class="pill err" title="' + esc(Store.error) + '"><i></i>Offline</span>' : '<span class="pill"><i></i>This device</span>';
   const link = (h, t) => `<a class="navlink" href="#${h}" ${current === h ? 'aria-current="page"' : ''}>${t}</a>`;
-  return `<header class="bar"><a class="brand" href="#">${LOGO}<b>${esc(S().eventName)}</b></a>${link('play', 'Bladers')}${link('arena', 'Arena')}${link('admin', 'Admin')}${pill}</header>`;
+  return `<header class="bar"><a class="brand" href="#" aria-label="Home">${LOGO}<b>${esc(S().eventName)}</b></a>${link('play', 'Bladers')}${link('arena', 'Arena')}${link('admin', 'Admin')}${pill}</header>`;
 }
 
 /* ---------- HOME ---------- */
@@ -821,7 +821,7 @@ function viewArena() {
       <div class="lobby-grid">${all.map(b => `<div class="tile ${b.done ? 'done' : ''}">${avatar(b)}<span>${esc(b.name)}</span></div>`).join('')}</div></div>
       <div class="corner-qr"><div class="qr-mini">${qrSvg(linkTo('play'))}</div><span class="k">Scan to do<br>your Blader profile</span></div>`;
   }
-  return `<div class="arena"><div class="arena-top">${LOGO}<b>${esc(S().eventName)}</b><span class="k">${Store.mode === 'live' ? 'Live' : 'This device'}</span></div><div class="stage">${stage}</div>
+  return `<div class="arena"><div class="arena-top"><a class="brand" href="#" aria-label="Home">${LOGO}<b>${esc(S().eventName)}</b></a><span class="k">${Store.mode === 'live' ? 'Live' : 'This device'}</span></div><div class="stage">${stage}</div>
     <div class="arena-tools"><button class="btn small ghost" data-act="fullscreen">Full screen</button><a class="btn small ghost" href="#admin">Admin</a></div></div>`;
 }
 let wake = null;

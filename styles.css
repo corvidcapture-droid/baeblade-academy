@@ -276,6 +276,7 @@ body[data-view="arena"] { overflow: hidden; }
 .arena { height: 100vh; height: 100dvh; display: grid; grid-template-rows: auto 1fr; padding: 2vh 3vw; gap: 2vh; position: relative; }
 .arena-top { display: flex; align-items: center; gap: 16px; }
 .arena-top svg { width: 4vh; height: 4vh; min-width: 28px; min-height: 28px; }
+.arena-top .brand { margin-right: auto; gap: 16px; }
 .arena-top b { font: 800 clamp(20px, 2.6vh, 34px)/1 var(--f-display); text-transform: uppercase; letter-spacing: .04em; margin-right: auto; }
 .arena-top .k { font-size: clamp(11px, 1.4vh, 16px); }
 .arena-tools { position: absolute; right: 3vw; bottom: 2vh; display: flex; gap: 8px; opacity: .25; transition: opacity .2s; }
