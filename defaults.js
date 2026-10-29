@@ -11,6 +11,7 @@
 window.BAEBLADE_DEFAULTS = {
   eventName: "Baeblade Academy",
   tagline: "Blader Assessment Day",
+  contentVersion: 2,
 
   roster: [
     { name: "Mig",    exp: "Expert" },
@@ -28,79 +29,110 @@ window.BAEBLADE_DEFAULTS = {
     { name: "Nkone",  exp: "Intermediate" }
   ],
 
+  /* PROFILE QUIZ — about the Blader themselves.
+     fx   = stat points (atk Attack, def Defense, sta Stamina, bal Balance)
+     arch = archetype the answer leans towards (see archetypes below)
+     look = phrase added to their character-art description */
   questions: [
-    { text: "Alden has a completely free Saturday. What's the plan?", options: [
-      { text: "Go-karting, then paintball. Full speed all day.", fx: { atk: 3, bal: 1 } },
-      { text: "Doors locked, snacks stocked, nobody gets in.", fx: { def: 3 } },
-      { text: "A long hike from sunrise to sunset.", fx: { sta: 3, def: 1 } },
-      { text: "Bit of everything: brunch, a match, then a braai.", fx: { bal: 3, sta: 1 } } ] },
+    { text: "Your everyday style is…", options: [
+      { text: "Streetwear: sneakers, hoodies, caps", fx: { atk: 2, bal: 1 }, arch: "rebel", look: "streetwear influence with fresh sneakers" },
+      { text: "Sharp and put-together", fx: { def: 2, bal: 1 }, arch: "strategist", look: "sharp tailored lines and a neat collar" },
+      { text: "Sporty, always ready to move", fx: { sta: 2, atk: 1 }, arch: "hero", look: "athletic sportswear details" },
+      { text: "Vintage and thrifted, one of a kind", fx: { bal: 3 }, arch: "free", look: "eclectic vintage patches and pins" },
+      { text: "All black everything", fx: { def: 2, sta: 1 }, arch: "wolf", look: "dark, minimal base layers" },
+      { text: "Loud colours and prints", fx: { atk: 2, bal: 1 }, arch: "star", look: "bold graphic prints and clashing colour pops" } ] },
+
+    { text: "Pick the walk-out music for your first battle.", options: [
+      { text: "Heavy rock or metal", fx: { atk: 3 }, arch: "rebel", look: "rock-and-roll edge with studs and a torn sleeve" },
+      { text: "Amapiano or hip-hop", fx: { bal: 2, atk: 1 }, arch: "star", look: "chains and swagger, hip-hop energy" },
+      { text: "Pounding techno or EDM", fx: { sta: 2, atk: 1 }, arch: "free", look: "neon rave light trails" },
+      { text: "Epic movie score", fx: { def: 2, bal: 1 }, arch: "hero", look: "heroic cinematic lighting" },
+      { text: "Something nobody else has heard of", fx: { sta: 2, def: 1 }, arch: "wolf", look: "mysterious indie-kid details" },
+      { text: "80s synthwave", fx: { bal: 2, sta: 1 }, arch: "strategist", look: "retro 80s synthwave glow" } ] },
+
+    { text: "Your perfect free day?", options: [
+      { text: "Something with an adrenaline rush", fx: { atk: 3 }, arch: "hero", look: "windswept, mid-action energy" },
+      { text: "A long gaming session", fx: { def: 2, sta: 1 }, arch: "strategist", look: "gamer touches: a headset mic and controller-button motifs" },
+      { text: "Outside: hike, surf or ride", fx: { sta: 3 }, arch: "free", look: "outdoor adventurer touches, rugged and sun-kissed" },
+      { text: "Making something: art, music, food", fx: { bal: 3 }, arch: "free", look: "creative maker details, paint flecks on the sleeves" },
+      { text: "Out with a big crowd", fx: { atk: 1, bal: 2 }, arch: "star", look: "crowd-pleaser charisma, a fan-favourite look" },
+      { text: "Completely off the grid", fx: { def: 3 }, arch: "wolf", look: "lone-traveller look with a weathered hooded layer" } ] },
+
+    { text: "Which world would you rather live in?", options: [
+      { text: "Neon cyberpunk city", fx: { atk: 2, bal: 1 }, arch: "rebel", look: "neon cyberpunk city skyline in the background" },
+      { text: "Ancient mountain temple", fx: { def: 2, sta: 1 }, arch: "strategist", look: "misty ancient mountain temple in the background" },
+      { text: "Deep-space station", fx: { sta: 2, bal: 1 }, arch: "wolf", look: "starfield and space station in the background" },
+      { text: "Wild jungle", fx: { atk: 1, sta: 2 }, arch: "free", look: "wild glowing jungle in the background" },
+      { text: "Stadium under floodlights", fx: { atk: 2, bal: 1 }, arch: "star", look: "packed floodlit stadium in the background" },
+      { text: "Floating sky kingdom", fx: { bal: 2, def: 1 }, arch: "hero", look: "floating sky islands in the background" } ] },
+
+    { text: "Your friends would call you…", options: [
+      { text: "Intense", fx: { atk: 3 }, arch: "rebel", look: "an intense, fiery stare" },
+      { text: "The reliable one", fx: { def: 3 }, arch: "hero", look: "a calm, steady expression" },
+      { text: "Unstoppable", fx: { sta: 2, atk: 1 }, arch: "hero", look: "a determined grin" },
+      { text: "The funny one", fx: { bal: 3 }, arch: "star", look: "a cheeky, playful smile" },
+      { text: "The mastermind", fx: { def: 1, bal: 2 }, arch: "strategist", look: "a knowing half-smile" },
+      { text: "Mysterious", fx: { sta: 2, def: 1 }, arch: "wolf", look: "a cool, unreadable expression" } ] },
+
+    { text: "Pick a superpower.", options: [
+      { text: "Super speed", fx: { atk: 2, sta: 1 }, arch: "hero", look: "speed lines streaking around them" },
+      { text: "Force field", fx: { def: 3 }, arch: "strategist", look: "a faint hexagonal energy shield" },
+      { text: "Never get tired", fx: { sta: 3 }, arch: "wolf", look: "a steady, endless glow in their eyes" },
+      { text: "Shapeshifting", fx: { bal: 3 }, arch: "free", look: "subtle shifting patterns across their clothes" },
+      { text: "Control lightning", fx: { atk: 3 }, arch: "rebel", look: "sparks dancing on their fingertips" },
+      { text: "Make everyone love you", fx: { bal: 2, atk: 1 }, arch: "star", look: "a spotlight glow" } ] },
 
     { text: "A rival trash-talks you before a match. You…", options: [
-      { text: "Launch first and launch hard.", fx: { atk: 3 } },
-      { text: "Smile. Let them wear themselves out on my wall.", fx: { def: 3, sta: 1 } },
-      { text: "Say nothing. I'll still be spinning when they stop.", fx: { sta: 3 } },
-      { text: "Laugh it off and adapt to whatever they do.", fx: { bal: 3, def: 1 } } ] },
+      { text: "Launch first and launch hard", fx: { atk: 3 }, arch: "rebel", look: "an aggressive forward lean" },
+      { text: "Smile and let them wear themselves out", fx: { def: 3, sta: 1 }, arch: "strategist", look: "relaxed, unbothered body language" },
+      { text: "Say nothing. Still spinning when they stop", fx: { sta: 3 }, arch: "wolf", look: "silent, focused body language" },
+      { text: "Trash-talk back, louder", fx: { atk: 2, bal: 1 }, arch: "star", look: "a showboating, crowd-facing stance" } ] },
 
-    { text: "Pick your weapon for a zombie movie.", options: [
-      { text: "Cricket bat. Straight in.", fx: { atk: 3, bal: 1 } },
-      { text: "Riot shield.", fx: { def: 3 } },
-      { text: "Running shoes. I'll outlast everyone.", fx: { sta: 3 } },
-      { text: "Whatever's nearby. I improvise.", fx: { bal: 3 } } ] },
+    { text: "Your animal energy?", options: [
+      { text: "Shark", fx: { atk: 3 }, arch: "rebel", look: "shark-tooth motif on their gear" },
+      { text: "Tortoise", fx: { def: 3 }, arch: "strategist", look: "hexagonal shell-plate motif on their gear" },
+      { text: "Eagle", fx: { sta: 2, atk: 1 }, arch: "hero", look: "wing motif on their gear" },
+      { text: "Fox", fx: { bal: 3 }, arch: "free", look: "fox-tail tassel on their gear" },
+      { text: "Wolf", fx: { sta: 2, def: 1 }, arch: "wolf", look: "wolf-fang motif on their gear" },
+      { text: "Peacock", fx: { bal: 2, atk: 1 }, arch: "star", look: "iridescent feather-pattern trim" } ] },
 
-    { text: "Group project. What's your job?", options: [
-      { text: "I pitch the big, bold idea.", fx: { atk: 3 } },
-      { text: "I catch everyone's mistakes.", fx: { def: 3 } },
-      { text: "I'm the one still working at 2am.", fx: { sta: 3, def: 1 } },
-      { text: "I keep everyone talking to each other.", fx: { bal: 3 } } ] },
+    { text: "Pre-battle fuel?", options: [
+      { text: "Something extra spicy", fx: { atk: 3 }, arch: "rebel" },
+      { text: "Biltong", fx: { def: 2, sta: 1 }, arch: "hero" },
+      { text: "Energy drink", fx: { sta: 2, atk: 1 }, arch: "star" },
+      { text: "A sweet treat", fx: { bal: 3 }, arch: "free" },
+      { text: "Nothing. Focus", fx: { sta: 2, def: 1 }, arch: "wolf" } ] },
 
-    { text: "Load-shedding hits in the middle of game night.", options: [
-      { text: "Torch on. Game continues. I'm winning.", fx: { atk: 2, sta: 1 } },
-      { text: "Already got the inverter. You're welcome.", fx: { def: 3 } },
-      { text: "Candles out. We play until the power's back.", fx: { sta: 3 } },
-      { text: "Switch to cards and keep the vibe going.", fx: { bal: 3 } } ] },
-
-    { text: "Dream car?", options: [
-      { text: "Track-day hypercar.", fx: { atk: 3 } },
-      { text: "Armoured Land Cruiser.", fx: { def: 3, sta: 1 } },
-      { text: "A hybrid that never needs a fill-up.", fx: { sta: 3 } },
-      { text: "Hot hatch: quick, practical, fun.", fx: { bal: 3, atk: 1 } } ] },
+    { text: "In a group, you're the one who…", options: [
+      { text: "Pitches the big, bold idea", fx: { atk: 3 }, arch: "rebel" },
+      { text: "Spots the problems early", fx: { def: 3 }, arch: "strategist" },
+      { text: "Keeps going after everyone quits", fx: { sta: 3 }, arch: "hero" },
+      { text: "Keeps everyone laughing", fx: { bal: 3 }, arch: "star" },
+      { text: "Quietly does it their own way", fx: { sta: 2, bal: 1 }, arch: "wolf" } ] },
 
     { text: "Last 30 seconds of a close match.", options: [
-      { text: "All in. Big finish.", fx: { atk: 3 } },
-      { text: "Hold the line. Give them nothing.", fx: { def: 3 } },
-      { text: "Stay calm. They'll tire before I do.", fx: { sta: 3 } },
-      { text: "Read the moment, then commit.", fx: { bal: 3 } } ] },
-
-    { text: "Pick an animal.", options: [
-      { text: "Shark", fx: { atk: 3 } },
-      { text: "Tortoise", fx: { def: 3, sta: 1 } },
-      { text: "Albatross. Flies for days.", fx: { sta: 3 } },
-      { text: "Leopard", fx: { bal: 2, atk: 1 } } ] },
-
-    { text: "How do you eat a burger?", options: [
-      { text: "Three bites. Gone.", fx: { atk: 3 } },
-      { text: "Knife and fork, napkin ready.", fx: { def: 3 } },
-      { text: "Slowly. Savour every bite.", fx: { sta: 3 } },
-      { text: "Half now, half later with the chips.", fx: { bal: 3 } } ] },
-
-    { text: "Your friends would describe you as…", options: [
-      { text: "Intense", fx: { atk: 3 } },
-      { text: "Reliable", fx: { def: 3 } },
-      { text: "Unstoppable", fx: { sta: 2, atk: 1 } },
-      { text: "Easy-going", fx: { bal: 3 } } ] },
+      { text: "All in. Big finish", fx: { atk: 3 }, arch: "hero" },
+      { text: "Hold the line. Give them nothing", fx: { def: 3 }, arch: "strategist" },
+      { text: "Stay calm. They'll tire first", fx: { sta: 3 }, arch: "wolf" },
+      { text: "Read the moment, then improvise", fx: { bal: 3 }, arch: "free" } ] },
 
     { text: "What's your launch style?", options: [
-      { text: "Full power, every time.", fx: { atk: 3 } },
-      { text: "Steady and dead centre.", fx: { def: 2, bal: 1 } },
-      { text: "Smooth and controlled.", fx: { sta: 3 } },
-      { text: "Depends on who I'm facing.", fx: { bal: 3 } } ] },
-
-    { text: "Alden's birthday cake should be…", options: [
-      { text: "Chilli chocolate. Bold.", fx: { atk: 3 } },
-      { text: "A six-layer fortress.", fx: { def: 3 } },
-      { text: "Big enough to last the whole weekend.", fx: { sta: 3 } },
-      { text: "Half chocolate, half vanilla.", fx: { bal: 3 } } ] }
+      { text: "Full power, every time", fx: { atk: 3 }, arch: "rebel" },
+      { text: "Steady and dead centre", fx: { def: 2, bal: 1 }, arch: "strategist" },
+      { text: "Smooth and controlled", fx: { sta: 3 }, arch: "wolf" },
+      { text: "With a flourish. It's a show", fx: { bal: 2, atk: 1 }, arch: "star" } ] }
   ],
+
+  /* ARCHETYPES — the profile quiz tallies "arch" picks; the top one is shown on the Blader card
+     and its look is added to the art description. */
+  archetypes: {
+    rebel:      { name: "The Rebel",      blurb: "Breaks the rules and the opponent's Bey.", look: "rebel attitude, a little scuffed and defiant" },
+    strategist: { name: "The Strategist", blurb: "Three moves ahead before the launch.", look: "composed strategist, sharp eyes, precise posture" },
+    hero:       { name: "The Hero",       blurb: "Never quits. Always shows up for the team.", look: "classic shonen hero energy, heroic and bright" },
+    star:       { name: "The Showstopper", blurb: "Plays to the crowd and wins it.", look: "showstopper flair and celebrity confidence" },
+    wolf:       { name: "The Lone Wolf",  blurb: "Quiet, focused and impossible to read.", look: "lone-wolf cool, partly in shadow" },
+    free:       { name: "The Free Spirit", blurb: "Unpredictable, creative, never the same twice.", look: "free-spirited, playful and unpredictable vibe" }
+  },
 
   /* CHARACTER QUESTIONS — asked after the profile quiz.
      "look" is the phrase each answer adds to that Blader's character description
@@ -152,15 +184,15 @@ window.BAEBLADE_DEFAULTS = {
 
   /* LIVE TEAM QUIZ — played at the party on the TV.
      "correct" is the number of the right answer: 0 = first, 1 = second, 2 = third, 3 = fourth.
-     The Alden questions are guesses: set the right answers in Admin → Team quiz. */
+     Edit or add your own in Admin → Team quiz. */
   teamQuiz: [
-    { text: "How old is Alden turning?", options: ["8", "9", "10", "11"], correct: 2, seconds: 20, checkMe: true },
-    { text: "What is Alden's favourite food?", options: ["Pizza", "Burgers", "Sushi", "Pasta"], correct: 0, seconds: 20, checkMe: true },
-    { text: "Which Beyblade type is Alden?", options: ["Attack", "Defense", "Stamina", "Balance"], correct: 0, seconds: 20, checkMe: true },
     { text: "What are the four Beyblade types?", options: ["Attack, Defense, Stamina, Balance", "Fire, Water, Earth, Air", "Speed, Power, Spin, Luck", "Strike, Guard, Endure, Dodge"], correct: 0, seconds: 20 },
     { text: "Which country do Beyblades come from?", options: ["USA", "Japan", "South Korea", "Germany"], correct: 1, seconds: 15 },
     { text: "Which toy company created Beyblade?", options: ["Hasbro", "Bandai", "Takara Tomy", "Mattel"], correct: 2, seconds: 15 },
     { text: "What keeps a spinning top standing upright?", options: ["Magnetism", "Angular momentum", "Air pressure", "Static electricity"], correct: 1, seconds: 20 },
-    { text: "Which planet is called the Red Planet?", options: ["Venus", "Jupiter", "Mars", "Mercury"], correct: 2, seconds: 15 }
+    { text: "Which Blader type wins by outlasting everyone?", options: ["Attack", "Defense", "Stamina", "Balance"], correct: 2, seconds: 15 },
+    { text: "Which planet is called the Red Planet?", options: ["Venus", "Jupiter", "Mars", "Mercury"], correct: 2, seconds: 15 },
+    { text: "What do you shout before a launch?", options: ["Go go go!", "Let it rip!", "Spin to win!", "Battle on!"], correct: 1, seconds: 15 },
+    { text: "Which animal is the fastest on land?", options: ["Lion", "Cheetah", "Springbok", "Horse"], correct: 1, seconds: 15 }
   ]
 };

@@ -129,6 +129,12 @@ const Store = {
 
   async seed() {
     const s = this.state;
+    const cv = DEF.contentVersion || 1;
+    if (s.settings && (s.settings.contentVersion || 1) < cv) {
+      await this.set('questions', defaultQuestions());
+      await this.set('liveq', defaultLiveQ());
+      await this.set('settings', { ...s.settings, contentVersion: cv });
+    }
     if (!s.questions) await this.set('questions', defaultQuestions());
     if (!s.teams) await this.set('teams', []);
     if (!s.arena) await this.set('arena', defaultArena());
@@ -136,7 +142,7 @@ const Store = {
     if (!s.charq) await this.set('charq', defaultCharQ());
     if (!s.live) await this.set('live', { status: 'idle', qIndex: 0, stamp: '' });
     if (!s.settings) {
-      await this.set('settings', { eventName: DEF.eventName || 'Baeblade Academy', tagline: DEF.tagline || 'Blader Assessment Day', adminPin: '1234', teamSize: 3, showTeams: false, siteUrl: '', requirePin: true, selfJoin: true });
+      await this.set('settings', { eventName: DEF.eventName || 'Baeblade Academy', tagline: DEF.tagline || 'Blader Assessment Day', adminPin: '1234', contentVersion: DEF.contentVersion || 1, teamSize: 3, showTeams: false, siteUrl: '', requirePin: true, selfJoin: true });
       if (!Object.keys(s.bladers).length) {
         for (const r of DEF.roster || []) await addBlader(r.name, r.exp);
       }
@@ -144,7 +150,7 @@ const Store = {
   },
 };
 
-const defaultQuestions = () => (DEF.questions || []).map(q => ({ id: uid(), text: q.text, options: q.options.map(o => ({ text: o.text, fx: { ...o.fx } })) }));
+const defaultQuestions = () => (DEF.questions || []).map(q => ({ id: uid(), text: q.text, options: q.options.map(o => ({ text: o.text, fx: { ...o.fx }, arch: o.arch || '', look: o.look || '' })) }));
 const defaultArena = () => ({ screen: 'lobby', revealed: 0, battle: { label: 'Battle 01', a: '', b: '', note: 'Bladers — prepare to launch' }, message: { big: 'Let it rip', small: '' } });
 const defaultCharQ = () => (DEF.charQuiz || []).map(q => ({ id: 'c' + uid(), text: q.text, options: q.options.map(o => ({ text: o.text, look: o.look || o.text })) }));
 const defaultLiveQ = () => (DEF.teamQuiz || []).map(q => ({ id: uid(), text: q.text, options: q.options.slice(), correct: q.correct || 0, seconds: q.seconds || 20, checkMe: !!q.checkMe }));
@@ -156,18 +162,31 @@ const questions = () => Store.state.questions || [];
 const charQs = () => Store.state.charq || [];
 const quizQs = () => questions().concat(charQs().map(q => ({ ...q, char: true })));
 const TYPE_LOOK = { atk: 'aggressive, sharp angular armour details', def: 'sturdy, heavily shielded silhouette', sta: 'sleek, streamlined and agile build', bal: 'versatile, well-balanced design' };
+const ARCH = DEF.archetypes || {};
+function archOf(answers) {
+  const tally = {};
+  for (const q of questions()) { const o = q.options[(answers || {})[q.id]]; if (o && o.arch && ARCH[o.arch]) tally[o.arch] = (tally[o.arch] || 0) + 1; }
+  let best = ''; for (const k of Object.keys(tally)) if (!best || tally[k] > tally[best]) best = k;
+  return best;
+}
+function styleLooks(b) {
+  const a = b.answers || {};
+  return questions().map(q => (q.options[a[q.id]] || {}).look).filter(Boolean);
+}
 function lookOf(b) {
   const a = b.answers || {};
   return charQs().map(q => { const o = q.options[a[q.id]]; return o ? { q: q.text, pick: o.text, look: o.look } : null; }).filter(Boolean);
 }
 function briefOf(b) {
-  const looks = lookOf(b).map(x => x.look);
+  const looks = lookOf(b).map(x => x.look).concat(styleLooks(b));
+  const ar = ARCH[b.arch || archOf(b.answers)];
   const bits = [
     'Turn the person in the reference photo into an original anime-style spinning-top battle character, in the style of a modern Japanese battling-tops anime (inspired by Beyblade, but not a copy of any existing character).',
     'Keep their face, skin tone, hairstyle and hair colour clearly recognisable.',
-    b.type ? `They are a ${typeName(b.type)}-type Blader: ${TYPE_LOOK[b.type]}.` : '',
+    b.type ? `They are ${b.type === 'atk' ? 'an' : 'a'} ${typeName(b.type)}-type Blader: ${TYPE_LOOK[b.type]}.` : '',
+    ar ? `Archetype: ${ar.name} — ${ar.look}.` : '',
     looks.length ? 'Character details: ' + looks.join('; ') + '.' : '',
-    'Holding their own glowing spinning top. Bold clean line art, cel shading, dramatic rim lighting, dynamic stadium arena background.',
+    'Holding their own glowing spinning top. Bold clean line art, cel shading, dramatic rim lighting' + (looks.some(l => /background/.test(l)) ? '.' : ', dynamic stadium arena background.'),
     'Square 1:1 head-and-torso portrait, face centred. No text, no logos.'
   ];
   return bits.filter(Boolean).join(' ');
@@ -275,7 +294,7 @@ function viewHome() {
     <div class="hero-mark">${LOGO}</div>
     <p class="eyebrow">${esc(S().tagline)}</p>
     <h1>${title}</h1>
-    <p class="lede">Log in with your Blader PIN, take the assessment and find out whether you're Attack, Defense, Stamina or Balance.</p>
+    <p class="lede">Take the Blader quiz to find your type, your archetype and the look of your Blader character.</p>
     <div class="doors">
       <a class="door door-main" href="#play"><span class="k">Bladers</span><strong>Enter the Academy</strong><span>Log in and take your assessment</span></a>
       <a class="door" href="#arena"><span class="k">TV</span><strong>Arena screen</strong><span>Put this on the big screen</span></a>
@@ -362,7 +381,7 @@ async function answer(i) {
   if (ui.qIndex < qs.length - 1) { ui.qIndex++; render(); window.scrollTo(0, 0); return; }
   const { stats, type } = computeStats(ui.draft);
   ui.justFinished = true;
-  await Store.set('blader:' + b.id, { ...b, answers: { ...ui.draft }, stats, type, done: true, doneAt: new Date().toISOString() });
+  await Store.set('blader:' + b.id, { ...b, answers: { ...ui.draft }, stats, type, arch: archOf(ui.draft), done: true, doneAt: new Date().toISOString() });
   local.set('draft:' + b.id, null);
   window.scrollTo(0, 0);
 }
@@ -376,7 +395,7 @@ function viewProfile(b) {
     <div style="min-width:0">
       <span class="bcard-id">${esc(b.id)} · ${esc(b.exp)}</span>
       <h1>${esc(b.name)}</h1>
-      <span class="type-badge">${esc(typeName(b.type))} type</span>
+      <span class="type-badge">${esc(typeName(b.type))} type</span>${ARCH[b.arch] ? `<p class="arch"><b>${esc(ARCH[b.arch].name)}</b> · ${esc(ARCH[b.arch].blurb)}</p>` : ''}
       ${statBars(b)}
     </div>
   </article>
@@ -438,7 +457,7 @@ function adminBladers() {
 
 function adminQuestions() {
   const qs = questions();
-  return `<div class="section-head"><div><p class="eyebrow">${qs.length} questions · each answer adds stat points</p><h2>Assessment</h2></div>
+  return `<div class="section-head"><div><p class="eyebrow">${qs.length} questions · each answer sets stats, an archetype and art details</p><h2>Profile quiz</h2></div>
     <div class="row"><button class="btn primary small" data-act="q-new">Add question</button><button class="btn danger small" data-act="q-restore" data-confirm="Replace all questions?">Restore defaults</button></div></div>
   <div class="note warn" style="margin-bottom:14px"><p>Bladers who already finished keep their stats. To re-score someone after editing questions, open them in Bladers and reset their assessment.</p></div>
   <div class="qlist">${qs.map((q, i) => `<div class="qitem"><span class="n">${pad(i + 1)}</span><div style="min-width:0"><p>${esc(q.text)}</p><div class="qopts">${q.options.map(o => `<span>${esc(o.text)} <b class="num">${STATS.filter(s => +o.fx?.[s.k]).map(s => `${s.short}+${o.fx[s.k]}`).join(' ')}</b></span>`).join('')}</div></div>
@@ -602,14 +621,16 @@ function modalQuestion(m) {
   <p class="muted" style="margin:0;font-size:14px">For each answer, set how many points it adds to each stat (0–5).</p>
   ${d.options.map((o, i) => `<div class="optrow"><div class="row spread"><span class="lbl">Answer ${String.fromCharCode(65 + i)}</span>${d.options.length > 2 ? `<button class="btn danger small" data-act="opt-del" data-i="${i}">Remove</button>` : ''}</div>
     <input id="o-text-${i}" type="text" value="${esc(o.text)}" aria-label="Answer ${i + 1} text">
-    <div class="grid4">${STATS.map(s => `<div class="field t-${s.k}"><label for="o-${s.k}-${i}">${s.short}</label><input id="o-${s.k}-${i}" type="number" min="0" max="5" value="${+o.fx?.[s.k] || 0}"></div>`).join('')}</div></div>`).join('')}
+    <div class="grid4">${STATS.map(s => `<div class="field t-${s.k}"><label for="o-${s.k}-${i}">${s.short}</label><input id="o-${s.k}-${i}" type="number" min="0" max="5" value="${+o.fx?.[s.k] || 0}"></div>`).join('')}</div>
+    <div class="grid2"><div class="field"><label for="o-arch-${i}">Archetype</label><select id="o-arch-${i}"><option value="">None</option>${Object.entries(ARCH).map(([k, a]) => `<option value="${k}" ${o.arch === k ? 'selected' : ''}>${esc(a.name)}</option>`).join('')}</select></div>
+    <div class="field"><label for="o-look-${i}">Art description phrase</label><input id="o-look-${i}" type="text" value="${esc(o.look || '')}" placeholder="Optional"></div></div></div>`).join('')}
   ${d.options.length < 6 ? '<button class="btn ghost small" data-act="opt-add">Add answer</button>' : ''}
   <div class="modal-foot"><span></span><div class="row"><button class="btn ghost" data-act="modal-close">Cancel</button><button class="btn primary" data-act="q-save">Save question</button></div></div>`;
 }
 function readQForm() {
   const d = ui.modal.draft;
   d.text = $('#f-qtext').value;
-  d.options = d.options.map((o, i) => ({ text: $('#o-text-' + i).value, fx: Object.fromEntries(STATS.map(s => [s.k, Math.max(0, Math.min(5, +$('#o-' + s.k + '-' + i).value || 0))])) }));
+  d.options = d.options.map((o, i) => ({ text: $('#o-text-' + i).value, fx: Object.fromEntries(STATS.map(s => [s.k, Math.max(0, Math.min(5, +$('#o-' + s.k + '-' + i).value || 0))])), arch: $('#o-arch-' + i).value, look: $('#o-look-' + i).value.trim() }));
 }
 function readBladerForm() {
   const d = ui.modal.draft;
@@ -919,7 +940,7 @@ const actions = {
     await Store.set('blader:' + b.id, { ...b, name: d.name.trim(), exp: d.exp, pin: d.pin, img: d.img, stats, type: stats ? (type || b.type) : '' });
     closeModal(); toast('Saved');
   },
-  'blader-reset': async () => { const b = Store.state.bladers[ui.modal.id]; await Store.set('blader:' + b.id, { ...b, answers: {}, stats: null, type: '', done: false }); closeModal(); toast(`${b.name} can retake the assessment`); },
+  'blader-reset': async () => { const b = Store.state.bladers[ui.modal.id]; await Store.set('blader:' + b.id, { ...b, answers: {}, stats: null, type: '', arch: '', done: false }); closeModal(); toast(`${b.name} can retake the assessment`); },
   'blader-del': async () => {
     const id = ui.modal.id, name = Store.state.bladers[id].name;
     const ts = teams(); if (ts.some(t => t.members.includes(id))) await Store.set('teams', ts.map(t => ({ ...t, members: t.members.filter(m => m !== id) })));

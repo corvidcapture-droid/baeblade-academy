@@ -399,3 +399,5 @@ body[data-view="arena"] { overflow: hidden; }
 .pick-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 10px; }
 .pick-list div { display: grid; gap: 4px; min-width: 0; }
 .pick-list b { font-weight: 600; }
+.arch { margin: 12px 0 0; color: var(--muted); font-size: 15px; }
+.arch b { color: var(--fg); font-family: var(--f-hud); letter-spacing: .06em; text-transform: uppercase; font-size: 13px; }

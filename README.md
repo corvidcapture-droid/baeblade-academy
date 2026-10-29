@@ -37,7 +37,7 @@ You need two free accounts. Guests need none.
 **3. In the site's Admin** (PIN `1234` until you change it)
 1. **Settings** → change the admin PIN → Save.
 2. **Bladers** → check the names, add anyone missing, upload character art if you have it.
-3. **Team quiz** → fix the 3 questions marked *Check answer* (Alden's age, favourite food, Beyblade type) and add your own.
+3. **Team quiz** → check the questions and add your own.
 4. **Bladers → Copy all invite links** → paste into WhatsApp (or **Copy invite** per person for individual messages).
 
 ### On the day
