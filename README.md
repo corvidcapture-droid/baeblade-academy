@@ -1,5 +1,10 @@
 # Baeblade Academy
 
+**Live site:** https://corvidcapture-droid.github.io/baeblade-academy/  
+**TV:** add `#arena` · **Admin:** add `#admin` · **Team quiz join:** add `#live`
+
+Hosted free on GitHub Pages; live data in the Supabase project `baeblade-academy`. Content is edited in Admin. Site changes are pushed to this repository and go live in about a minute.
+
 Party website: Blader profile quiz on guests' phones before the party, a live team quiz on the TV at the party (guests scan a QR code to join), team generation and arena screens. Everything is managed from an Admin panel. No coding needed.
 
 ## What guests do (nothing to install, no sign-up)
