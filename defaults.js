@@ -167,14 +167,6 @@ window.BAEBLADE_DEFAULTS = {
       { text: "Shadow smoke", look: "dark shadow smoke aura" },
       { text: "Crystal shards", look: "floating crystal shard aura" },
       { text: "Ocean waves", look: "crashing water wave aura" } ] },
-    { text: "Your spirit beast?", options: [
-      { text: "Dragon", look: "a translucent dragon spirit rising behind them" },
-      { text: "Phoenix", look: "a translucent phoenix spirit rising behind them" },
-      { text: "Wolf", look: "a translucent wolf spirit rising behind them" },
-      { text: "Pegasus", look: "a translucent pegasus spirit rising behind them" },
-      { text: "Tiger", look: "a translucent tiger spirit rising behind them" },
-      { text: "Shark", look: "a translucent shark spirit rising behind them" },
-      { text: "Raven", look: "a translucent raven spirit rising behind them" } ] },
     { text: "Strike a pose.", options: [
       { text: "Mid-launch, ripcord flying", look: "pose: mid-launch, pulling the launcher ripcord" },
       { text: "Holding my Bey up to the camera", look: "pose: holding their spinning top up towards the viewer" },

@@ -201,7 +201,7 @@ function briefOf(b) {
     ar ? `Archetype: ${ar.name} — ${ar.look}.` : '',
     looks.length ? 'Character details: ' + looks.join('; ') + '.' : '',
     'Holding their own glowing spinning top. Bold clean line art, cel shading, dramatic rim lighting' + (looks.some(l => /background/.test(l)) ? '.' : ', dynamic stadium arena background.'),
-    'Square 1:1 head-and-torso portrait, face centred. No text, no logos.'
+    'Square 1:1 head-and-torso portrait, face centred. No spirit animals or creatures in the scene. No text, no logos.'
   ];
   return bits.filter(Boolean).join(' ');
 }
