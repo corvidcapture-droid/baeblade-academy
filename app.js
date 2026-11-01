@@ -139,6 +139,7 @@ const Store = {
       const qs = s.questions.map(q => (q.role === 'style' || /everyday style/i.test(q.text)) ? { ...def, id: q.id } : q);
       await this.set('questions', qs);
     }
+    if (s.settings && have < 4) await this.set('charq', defaultCharQ());
     if (s.settings && have < cv) await this.set('settings', { ...this.state.settings, contentVersion: cv });
     if (!s.questions) await this.set('questions', defaultQuestions());
     if (!s.teams) await this.set('teams', []);
@@ -157,7 +158,7 @@ const Store = {
 
 const defaultQuestions = () => (DEF.questions || []).map(q => ({ id: uid(), text: q.text, ...(q.role ? { role: q.role } : {}), options: q.options.map(o => ({ text: o.text, fx: { ...o.fx }, arch: o.arch || '', look: o.look || '' })) }));
 const defaultArena = () => ({ screen: 'lobby', revealed: 0, battle: { label: 'Battle 01', a: '', b: '', note: 'Bladers — prepare to launch' }, message: { big: 'Let it rip', small: '' } });
-const defaultCharQ = () => (DEF.charQuiz || []).map(q => ({ id: 'c' + uid(), text: q.text, options: q.options.map(o => ({ text: o.text, look: o.look || o.text })) }));
+const defaultCharQ = () => (DEF.charQuiz || []).map(q => ({ id: 'c' + uid(), text: q.text, slot: q.slot || 'person', ...(q.type === 'text' ? { type: 'text', placeholder: q.placeholder || '', look: q.look || '{answer}', options: [] } : { options: q.options.map(o => ({ text: o.text, look: o.look == null ? o.text : o.look })) }) }));
 const defaultLiveQ = () => (DEF.teamQuiz || []).map(q => ({ id: uid(), text: q.text, options: q.options.slice(), correct: q.correct || 0, seconds: q.seconds || 20, checkMe: !!q.checkMe }));
 
 /* ---------- domain helpers ---------- */
@@ -186,22 +187,33 @@ function fashionOf(b) {
   const q = questions().find(x => x.role === 'style');
   return q ? (q.options[(b.answers || {})[q.id]] || {}).look || '' : '';
 }
+const clean = t => String(t || '').replace(/[<>{}]/g, '').replace(/\s+/g, ' ').trim().slice(0, 140);
 function lookOf(b) {
   const a = b.answers || {};
-  return charQs().map(q => { const o = q.options[a[q.id]]; return o ? { q: q.text, pick: o.text, look: o.look } : null; }).filter(Boolean);
+  return charQs().map(q => {
+    if (q.type === 'text') { const t = clean(a[q.id]); return t ? { q: q.text, pick: t, look: (q.look || '{answer}').replace('{answer}', t), slot: q.slot, typed: true } : null; }
+    const o = (q.options || [])[a[q.id]]; return o ? { q: q.text, pick: o.text, look: o.look, slot: q.slot } : null;
+  }).filter(Boolean);
 }
 function briefOf(b) {
-  const looks = lookOf(b).map(x => x.look).concat(styleLooks(b));
+  const picks = lookOf(b).filter(x => x.look);
+  const of = slot => picks.filter(x => (x.slot || 'person') === slot).map(x => x.look);
+  const typedOutfit = picks.filter(x => x.typed && x.slot === 'outfit').map(x => x.look);
+  const outfit = typedOutfit.concat(fashionOf(b) ? ['overall style ' + fashionOf(b)] : [], picks.filter(x => !x.typed && x.slot === 'outfit').map(x => x.look));
+  const person = of('person'), scene = of('scene'), flavour = styleLooks(b);
+  const looks = person.concat(scene, flavour);
   const ar = ARCH[b.arch || archOf(b.answers)];
   const bits = [
     'Turn the person in the reference photo into an original anime-style spinning-top battle character, in the style of a modern Japanese battling-tops anime (inspired by Beyblade, but not a copy of any existing character).',
-    'Keep their face, skin tone, hairstyle and hair colour clearly recognisable.',
-    fashionOf(b) ? `OUTFIT: their clothing must clearly show their personal style, ${fashionOf(b)}, upgraded into battle-ready gear. This style should be the first thing you notice about the outfit; any gear or armour details below are added on top of it, never replacing it.` : '',
+    'This must look like THIS specific person: keep their face shape, features, skin tone, hairstyle, hair colour and any facial hair exactly as in the photo.',
+    outfit.length ? `OUTFIT: dress them in their own real style, the first thing anyone should notice: ${outfit.join('; ')}. Keep it true to how they actually dress, with only light battle-ready touches.` : '',
+    person.length ? `PERSONAL DETAILS that make them recognisable: ${person.join('; ')}.` : '',
     b.type ? `They are ${b.type === 'atk' ? 'an' : 'a'} ${typeName(b.type)}-type Blader: ${TYPE_LOOK[b.type]}.` : '',
     ar ? `Archetype: ${ar.name} — ${ar.look}.` : '',
-    looks.length ? 'Character details: ' + looks.join('; ') + '.' : '',
+    scene.length ? 'Scene: ' + scene.join('; ') + '.' : '',
+    flavour.length ? 'Extra flavour: ' + flavour.join('; ') + '.' : '',
     'Holding their own glowing spinning top. Bold clean line art, cel shading, dramatic rim lighting' + (looks.some(l => /background/.test(l)) ? '.' : ', dynamic stadium arena background.'),
-    'Square 1:1 head-and-torso portrait, face centred. No spirit animals or creatures in the scene. No text, no logos.'
+    'Square 1:1 head-and-torso portrait, face centred. No spirit animals or magical creatures (a real pet they mention is fine). No text, no logos.'
   ];
   return bits.filter(Boolean).join(' ');
 }
@@ -383,7 +395,8 @@ function viewQuiz(b) {
   return `<div class="progress"><span style="width:${(ui.qIndex) / qs.length * 100}%"></span></div>
     <p class="q-count">Question ${pad(ui.qIndex + 1)} / ${pad(qs.length)}${q.char ? ' · Your character' : q.exp ? ' · Experience' : ''}</p>
     <h1 class="q-text">${esc(q.text)}</h1>
-    <div class="options">${q.options.map((o, i) => `<button class="opt ${picked === i ? 'picked' : ''}" data-act="answer" data-i="${i}"><b>${String.fromCharCode(65 + i)}</b><span>${esc(o.text)}</span></button>`).join('')}</div>
+    ${q.type === 'text' ? `<form class="form" data-form="text-answer"><div class="field"><label for="f-typed">Type your answer</label><input id="f-typed" type="text" maxlength="120" autocomplete="off" placeholder="${esc(q.placeholder || '')}" value="${esc(typeof picked === 'string' ? picked : '')}"></div><div class="row"><button class="btn primary" type="submit">Next</button><button class="btn ghost small" type="button" data-act="answer-skip">Skip</button></div><p class="muted" style="margin:0;font-size:14px">The more specific, the more your character looks like you.</p></form>`
+    : `<div class="options">${q.options.map((o, i) => `<button class="opt ${picked === i ? 'picked' : ''}" data-act="answer" data-i="${i}"><b>${String.fromCharCode(65 + i)}</b><span>${esc(o.text)}</span></button>`).join('')}</div>`}
     <div class="row spread" style="margin-top:22px"><button class="btn ghost small" data-act="q-back" ${ui.qIndex === 0 ? 'disabled' : ''}>Previous</button><button class="btn ghost small" data-act="logout">Log out</button></div>`;
 }
 
@@ -485,7 +498,7 @@ function adminCharQs() {
   return `<div class="section-head" style="margin-top:40px"><div><p class="eyebrow">${cs.length} questions · asked after the assessment · shape each Blader's character art</p><h2>Character</h2></div>
     <div class="row"><button class="btn primary small" data-act="cq-new">Add question</button><button class="btn danger small" data-act="cq-restore" data-confirm="Replace all character questions?">Restore defaults</button></div></div>
   <div class="note" style="margin-bottom:14px"><p>Each answer adds a phrase to that Blader's character description. Copy it from Admin → Bladers and paste it into Artlist with their photo.</p></div>
-  <div class="qlist">${cs.map((q, i) => `<div class="qitem"><span class="n">C${i + 1}</span><div style="min-width:0"><p>${esc(q.text)}</p><div class="qopts">${q.options.map(o => `<span title="${esc(o.look)}">${esc(o.text)}</span>`).join('')}</div></div>
+  <div class="qlist">${cs.map((q, i) => `<div class="qitem"><span class="n">C${i + 1}</span><div style="min-width:0"><p>${esc(q.text)}</p><div class="qopts">${q.type === 'text' ? `<span>Typed answer → ${esc(q.look || '')}</span>` : (q.options || []).map(o => `<span title="${esc(o.look)}">${esc(o.text)}</span>`).join('')}</div><p class="muted" style="margin:8px 0 0;font-size:13px">Shapes: ${esc({ outfit: 'outfit', person: 'personal details', scene: 'scene' }[q.slot] || 'personal details')}</p></div>
     <div class="qactions"><button class="btn ghost small" data-act="cq-move" data-i="${i}" data-d="-1" ${i === 0 ? 'disabled' : ''} aria-label="Move up">↑</button><button class="btn ghost small" data-act="cq-move" data-i="${i}" data-d="1" ${i === cs.length - 1 ? 'disabled' : ''} aria-label="Move down">↓</button><button class="btn small" data-act="cq-edit" data-i="${i}">Edit</button><button class="btn danger small" data-act="cq-del" data-i="${i}" data-confirm="Delete?">Delete</button></div></div>`).join('') || '<p class="muted">No character questions.</p>'}</div>`;
 }
 
@@ -493,17 +506,20 @@ function modalCharQ(m) {
   const d = m.draft;
   return `<h2>${m.index == null ? 'New character question' : 'Character question C' + (m.index + 1)}</h2>
   <div class="field"><label for="f-cqtext">Question</label><textarea id="f-cqtext" rows="2">${esc(d.text)}</textarea></div>
-  <p class="muted" style="margin:0;font-size:14px">The answer is what guests tap. The description phrase is what goes into the art prompt.</p>
-  ${d.options.map((o, i) => `<div class="optrow"><div class="row spread"><span class="lbl">Answer ${String.fromCharCode(65 + i)}</span>${d.options.length > 2 ? `<button class="btn danger small" data-act="cqopt-del" data-i="${i}">Remove</button>` : ''}</div>
+  <div class="grid2"><div class="field"><label for="f-cqtype">Answer type</label><select id="f-cqtype" data-change="cqtype"><option value="choice" ${d.type !== 'text' ? 'selected' : ''}>Tap an answer</option><option value="text" ${d.type === 'text' ? 'selected' : ''}>Type an answer</option></select></div>
+  <div class="field"><label for="f-cqslot">Part of the art</label><select id="f-cqslot">${[['outfit', 'Outfit'], ['person', 'Personal details'], ['scene', 'Scene (aura, pose)']].map(([k, l]) => `<option value="${k}" ${(d.slot || 'person') === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div></div>
+  ${d.type === 'text' ? `<div class="field"><label for="f-cqph">Example shown in the box</label><input id="f-cqph" type="text" value="${esc(d.placeholder || '')}"></div><div class="field"><label for="f-cqlook">Description phrase ({answer} is replaced with what they type)</label><input id="f-cqlook" type="text" value="${esc(d.look || '{answer}')}"></div>` : `<p class="muted" style="margin:0;font-size:14px">The answer is what guests tap. The description phrase is what goes into the art prompt.</p>
+  ${(d.options || []).map((o, i) => `<div class="optrow"><div class="row spread"><span class="lbl">Answer ${String.fromCharCode(65 + i)}</span>${d.options.length > 2 ? `<button class="btn danger small" data-act="cqopt-del" data-i="${i}">Remove</button>` : ''}</div>
     <input id="cq-t-${i}" type="text" value="${esc(o.text)}" aria-label="Answer ${i + 1}" placeholder="What guests see">
     <input id="cq-l-${i}" type="text" value="${esc(o.look)}" aria-label="Description phrase ${i + 1}" placeholder="Phrase added to the art description"></div>`).join('')}
-  ${d.options.length < 8 ? '<button class="btn ghost small" data-act="cqopt-add">Add answer</button>' : ''}
+  ${(d.options || []).length < 10 ? '<button class="btn ghost small" data-act="cqopt-add">Add answer</button>' : ''}`}
   <div class="modal-foot"><span></span><div class="row"><button class="btn ghost" data-act="modal-close">Cancel</button><button class="btn primary" data-act="cq-save">Save question</button></div></div>`;
 }
 function readCQForm() {
   const d = ui.modal.draft;
-  d.text = $('#f-cqtext').value;
-  d.options = d.options.map((_, i) => ({ text: $('#cq-t-' + i).value, look: $('#cq-l-' + i).value }));
+  d.text = $('#f-cqtext').value; d.slot = $('#f-cqslot').value;
+  if (d.type === 'text') { d.placeholder = $('#f-cqph').value; d.look = $('#f-cqlook').value; }
+  else d.options = (d.options || []).map((_, i) => ({ text: $('#cq-t-' + i).value, look: $('#cq-l-' + i).value }));
 }
 
 function adminTeams() {
@@ -932,6 +948,7 @@ const actions = {
   'pin-key': el => pinKey(el.dataset.k),
   'pin-cancel': () => { ui.pinFor = null; ui.pin = ''; render(); },
   'answer': el => answer(+el.dataset.i),
+  'answer-skip': () => answer(''),
   'q-back': () => { ui.qIndex = Math.max(0, ui.qIndex - 1); render(); },
   'logout': () => { local.set('me', null); ui.draft = {}; ui.qIndex = 0; render(); },
 
@@ -983,14 +1000,19 @@ const actions = {
   'q-del': async el => { const qs = questions().slice(); qs.splice(+el.dataset.i, 1); await Store.set('questions', qs); toast('Question deleted'); },
   'cq-new': () => openModal({ type: 'cq', index: null, draft: { text: '', options: [{ text: '', look: '' }, { text: '', look: '' }, { text: '', look: '' }] } }),
   'cq-edit': el => { const i = +el.dataset.i; openModal({ type: 'cq', index: i, draft: JSON.parse(JSON.stringify(charQs()[i])) }); },
-  'cqopt-add': () => { readCQForm(); ui.modal.draft.options.push({ text: '', look: '' }); drawModal(); },
+  'cqopt-add': () => { readCQForm(); (ui.modal.draft.options = ui.modal.draft.options || []).push({ text: '', look: '' }); drawModal(); },
   'cqopt-del': el => { readCQForm(); ui.modal.draft.options.splice(+el.dataset.i, 1); drawModal(); },
   'cq-save': async () => {
     readCQForm(); const d = ui.modal.draft;
     if (!d.text.trim()) { toast('Write the question first.', 'bad'); return; }
-    if (d.options.some(o => !o.text.trim())) { toast('Every answer needs text.', 'bad'); return; }
-    d.options = d.options.map(o => ({ text: o.text.trim(), look: o.look.trim() || o.text.trim() }));
-    const cs = charQs().slice(), item = { id: d.id || 'c' + uid(), text: d.text.trim(), options: d.options };
+    let item;
+    if (d.type === 'text') {
+      item = { id: d.id || 'c' + uid(), text: d.text.trim(), slot: d.slot, type: 'text', placeholder: d.placeholder.trim(), look: d.look.includes('{answer}') ? d.look.trim() : (d.look.trim() + ' {answer}').trim(), options: [] };
+    } else {
+      if (!d.options.length || d.options.some(o => !o.text.trim())) { toast('Every answer needs text.', 'bad'); return; }
+      item = { id: d.id || 'c' + uid(), text: d.text.trim(), slot: d.slot, options: d.options.map(o => ({ text: o.text.trim(), look: o.look.trim() })) };
+    }
+    const cs = charQs().slice();
     if (ui.modal.index == null) cs.push(item); else cs[ui.modal.index] = item;
     await Store.set('charq', cs); closeModal(); toast('Character question saved');
   },
@@ -1071,6 +1093,8 @@ document.addEventListener('change', async e => {
     await Store.set('teams', teams().map(t => ({ ...t, members: t.id === to ? t.members.filter(m => m !== id).concat(id) : t.members.filter(m => m !== id) })));
   } else if (k === 'team-name') {
     await Store.set('teams', teams().map(t => t.id === el.dataset.id ? { ...t, name: el.value.trim() || t.name } : t));
+  } else if (k === 'cqtype') {
+    readCQForm(); ui.modal.draft.type = el.value === 'text' ? 'text' : ''; if (ui.modal.draft.type === 'text') { ui.modal.draft.look = ui.modal.draft.look || '{answer}'; ui.modal.draft.placeholder = ui.modal.draft.placeholder || ''; } else ui.modal.draft.options = ui.modal.draft.options && ui.modal.draft.options.length ? ui.modal.draft.options : [{ text: '', look: '' }, { text: '', look: '' }]; drawModal();
   } else if (k === 'teamsize') {
     await Store.set('settings', { ...S(), teamSize: Math.max(2, Math.min(8, +el.value || 3)) });
   } else if (k === 'showteams') {
@@ -1091,6 +1115,8 @@ document.addEventListener('submit', async e => {
   if (f === 'admin-login') {
     const v = $('#f-adminpin').value.trim();
     if (v === S().adminPin) { local.set('admin', v); render(); } else { toast('Wrong admin PIN.', 'bad'); $('#f-adminpin').value = ''; }
+  } else if (f === 'text-answer') {
+    const v = clean($('#f-typed').value); document.activeElement.blur(); await answer(v);
   } else if (f === 'selfjoin') {
     const name = $('#f-selfname').value.trim(); if (!name) return;
     const dup = bladers().find(b => b.name.toLowerCase() === name.toLowerCase());

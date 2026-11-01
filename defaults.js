@@ -11,7 +11,7 @@
 window.BAEBLADE_DEFAULTS = {
   eventName: "Baeblade Academy",
   tagline: "Blader Assessment Day",
-  contentVersion: 3,
+  contentVersion: 4,
 
   roster: [
     { name: "Mig",    exp: "Expert" },
@@ -135,42 +135,74 @@ window.BAEBLADE_DEFAULTS = {
     free:       { name: "The Free Spirit", blurb: "Unpredictable, creative, never the same twice.", look: "free-spirited, playful and unpredictable vibe" }
   },
 
-  /* CHARACTER QUESTIONS — asked after the profile quiz.
-     "look" is the phrase each answer adds to that Blader's character description
-     (the text you paste into Artlist with their photo). Edit in Admin → Profile quiz. */
+  /* CHARACTER QUESTIONS — asked after the profile quiz. These are about the real person,
+     so each character looks like them, not like a costume.
+     slot: "outfit" (what they wear), "person" (features and personal touches), "scene" (aura and pose)
+     look: phrase added to the art description. Typed questions use {answer} in "look". */
   charQuiz: [
-    { text: "Pick your Blader colours.", options: [
-      { text: "Crimson red and black", look: "crimson red and black colour scheme" },
-      { text: "Electric blue and silver", look: "electric blue and silver colour scheme" },
-      { text: "Toxic green and charcoal", look: "toxic green and charcoal colour scheme" },
-      { text: "Royal purple and gold", look: "royal purple and gold colour scheme" },
-      { text: "Solar orange and white", look: "solar orange and white colour scheme" },
-      { text: "Ice white and teal", look: "ice white and teal colour scheme" } ] },
-    { text: "What do you battle in?", options: [
-      { text: "Armoured street jacket", look: "armoured streetwear jacket with tech panels" },
-      { text: "Ninja gear", look: "sleek ninja-inspired battle gear with a face wrap around the neck" },
-      { text: "Racing suit", look: "fitted motor-racing suit with sponsor-style patches" },
-      { text: "Futuristic tech armour", look: "futuristic light tech armour with glowing seams" },
-      { text: "Samurai-inspired", look: "modern samurai-inspired outfit with shoulder guards" },
-      { text: "Hoodie and cargo pants", look: "oversized hoodie and cargo pants, casual but battle-ready" } ] },
-    { text: "Your signature accessory?", options: [
-      { text: "Fingerless gloves", look: "fingerless battle gloves" },
-      { text: "Visor goggles", look: "tinted visor goggles pushed up on the forehead" },
-      { text: "Long scarf", look: "a long scarf trailing in the wind" },
-      { text: "Headphones", look: "chunky headphones around the neck" },
-      { text: "Cape", look: "a short dramatic cape" },
-      { text: "Arm bracers", look: "metal arm bracers" } ] },
-    { text: "When you launch, the arena fills with…", options: [
+    { text: "Which colours do you actually love wearing?", slot: "outfit", options: [
+      { text: "Black and white", look: "black and white colour palette" },
+      { text: "Earthy: olive, tan, brown", look: "earthy olive, tan and brown palette" },
+      { text: "Blues and denim", look: "blues and denim palette" },
+      { text: "Reds and burgundy", look: "red and burgundy palette" },
+      { text: "Pastels", look: "soft pastel palette" },
+      { text: "Neon and brights", look: "neon and bright colour palette" },
+      { text: "Purples and pinks", look: "purple and pink palette" },
+      { text: "Greys and navy", look: "grey and navy palette" } ] },
+
+    { text: "Describe your favourite outfit in a few words.", slot: "outfit", type: "text", placeholder: "e.g. oversized Chiefs jersey, ripped jeans, white Air Forces", look: "their favourite real-life outfit, recreated faithfully: {answer}" },
+
+    { text: "What's on your feet most days?", slot: "outfit", options: [
+      { text: "Chunky sneakers", look: "chunky sneakers" },
+      { text: "Clean white sneakers", look: "clean white sneakers" },
+      { text: "Boots", look: "boots" },
+      { text: "Slides or sandals", look: "slides" },
+      { text: "Skate shoes", look: "skate shoes" },
+      { text: "Smart shoes", look: "smart leather shoes" },
+      { text: "Barefoot if I can", look: "barefoot" } ] },
+
+    { text: "Do you wear glasses?", slot: "person", options: [
+      { text: "Yes, all the time", look: "wearing their everyday glasses" },
+      { text: "Sunglasses are my thing", look: "sunglasses perched on their head" },
+      { text: "No", look: "" } ] },
+
+    { text: "Your signature thing, the one people know you for?", slot: "person", options: [
+      { text: "A cap or beanie", look: "their signature cap or beanie" },
+      { text: "A chain or necklace", look: "their signature chain necklace" },
+      { text: "Earrings or piercings", look: "their earrings and piercings" },
+      { text: "Rings and bracelets", look: "stacked rings and bracelets" },
+      { text: "A watch", look: "a standout wristwatch" },
+      { text: "Tattoos", look: "visible tattoos on their arms" },
+      { text: "Headphones", look: "headphones around their neck" },
+      { text: "Nails always done", look: "bold painted nails" },
+      { text: "Nothing, I keep it simple", look: "" } ] },
+
+    { text: "What are you really into?", slot: "person", options: [
+      { text: "Music: playing or producing", look: "a nod to their love of music, like a guitar pick or headphones" },
+      { text: "Photography and video", look: "a camera slung on a strap" },
+      { text: "Gaming", look: "a game controller clipped to their belt" },
+      { text: "Sport", look: "sporty sweatband and a team-coloured detail" },
+      { text: "Art and design", look: "paint-smudged fingers and a sketchbook tucked away" },
+      { text: "Cars and bikes", look: "a racing-style patch and keys on a carabiner" },
+      { text: "Food and cooking", look: "a small chef's touch, like a rolled-up bandana" },
+      { text: "Outdoors and adventure", look: "a rugged adventure strap and carabiner" },
+      { text: "Books and stories", look: "a worn paperback tucked into a pocket" },
+      { text: "Tech and building things", look: "a tech gadget on their wrist" } ] },
+
+    { text: "One thing that's very you: a team, a pet, a catchphrase, anything.", slot: "person", type: "text", placeholder: "e.g. my Staffie Bruno, Liverpool fan, always says 'shap'", look: "include a small personal touch that is unmistakably theirs: {answer}" },
+
+    { text: "When you launch, the arena fills with…", slot: "scene", options: [
       { text: "Lightning", look: "crackling lightning aura" },
       { text: "Fire", look: "blazing fire aura" },
       { text: "A tornado", look: "swirling wind tornado aura" },
       { text: "Shadow smoke", look: "dark shadow smoke aura" },
       { text: "Crystal shards", look: "floating crystal shard aura" },
       { text: "Ocean waves", look: "crashing water wave aura" } ] },
-    { text: "Strike a pose.", options: [
+
+    { text: "Strike a pose.", slot: "scene", options: [
       { text: "Mid-launch, ripcord flying", look: "pose: mid-launch, pulling the launcher ripcord" },
       { text: "Holding my Bey up to the camera", look: "pose: holding their spinning top up towards the viewer" },
-      { text: "Arms crossed, unbothered", look: "pose: arms crossed, confident smirk" },
+      { text: "Arms crossed, unbothered", look: "pose: arms crossed, confident" },
       { text: "Crouched and ready", look: "pose: low crouch, launcher aimed, intense focus" },
       { text: "Pointing at my rival", look: "pose: pointing straight at the viewer as a challenge" } ] }
   ],
