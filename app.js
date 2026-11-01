@@ -17,7 +17,7 @@ const STATS = [
 const EXP = ['Beginner', 'Intermediate', 'Expert'];
 const EXP_W = { Beginner: 1, Intermediate: 2, Expert: 3 };
 
-const LOGO = `<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="28" fill="none" stroke="#eef1f8" stroke-width="3" stroke-dasharray="34 10"/><circle cx="32" cy="32" r="20" fill="none" stroke="#272d43" stroke-width="2"/><path d="M13 13h10l9 12 9-12h10L37 32l14 19H41l-9-12-9 12H13l14-19z" fill="#ff2d4a"/></svg>`;
+const LOGO = `<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="28" fill="none" stroke="#effaf1" stroke-width="3" stroke-dasharray="34 10"/><circle cx="32" cy="32" r="20" fill="none" stroke="#213a29" stroke-width="2"/><path d="M13 13h10l9 12 9-12h10L37 32l14 19H41l-9-12-9 12H13l14-19z" fill="#4dff3a"/></svg>`;
 
 /* ---------- small helpers ---------- */
 const $ = (s, r = document) => r.querySelector(s);
